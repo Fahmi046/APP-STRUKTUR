@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\Api\KaryawanController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\SDMController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -17,4 +17,6 @@ use App\Http\Controllers\Api\SDMController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-Route::post('/sdm', [SDMController::class, 'store']);
+
+
+Route::apiResource('sdm', KaryawanController::class);
