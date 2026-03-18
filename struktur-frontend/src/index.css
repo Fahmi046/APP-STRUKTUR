@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #ff6a00;
+  --color-background-light: #f8f7f5;
+  --color-background-dark: #0b0f19;
+  --color-card-dark: #161b26;
+  --color-border-dark: #242b38;
+  --font-display: "Inter", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100;
+    min-height: max(884px, 100dvh);
+  }
+}
+
+@layer utilities {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+/* Tambahkan ini di CSS Anda */
+.active-link .icon-fillable {
+  font-variation-settings:
+    "FILL" 1,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
