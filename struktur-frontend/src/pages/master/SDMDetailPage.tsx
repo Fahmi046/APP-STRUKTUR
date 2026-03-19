@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getKaryawanDetail, deleteKaryawan } from "../../api/sdmService";
+import toast from "react-hot-toast";
 
 const SDMDetailPage = () => {
   const navigate = useNavigate();
@@ -36,11 +37,25 @@ const SDMDetailPage = () => {
       if (id) {
         await deleteKaryawan(id);
         setIsDeleteModalOpen(false);
-        alert("Karyawan berhasil dihapus!");
+
+        // GANTI ALERT LAMA DENGAN INI:
+        toast.success("Karyawan berhasil dihapus!", {
+          style: {
+            borderRadius: "12px",
+            background: "#1e293b", // Warna slate-800 sesuai tema dark
+            color: "#fff",
+            border: "1px solid #334155",
+          },
+          iconTheme: {
+            primary: "#0ea5e9", // Warna primary biru bapak
+            secondary: "#fff",
+          },
+        });
+
         navigate("/master/sdm");
       }
     } catch (error) {
-      alert("Gagal menghapus data. Silakan coba lagi.");
+      toast.error("Gagal menghapus data");
     } finally {
       setLoading(false);
     }

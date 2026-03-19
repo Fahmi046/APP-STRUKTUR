@@ -5,12 +5,14 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+// 1. Import Toaster dari react-hot-toast
+import { Toaster } from "react-hot-toast";
 
 // Import Master Pages
 import MaterialListPage from "./pages/master/MaterialListPage";
 import TemplateListPage from "./pages/master/TemplateListPage";
-import SDMAddPage from "./pages/master/SDMAddPage"; // Pastikan file ini sudah dibuat
-import VendorListPage from "./pages/master/VendorListPage"; // Pastikan file ini sudah dibuat
+import SDMAddPage from "./pages/master/SDMAddPage";
+import VendorListPage from "./pages/master/VendorListPage";
 import MasterHubPage from "./pages/master/MasterHubPage";
 import SDMListPage from "./pages/master/SDMListPage";
 import SDMDetailPage from "./pages/master/SDMDetailPage";
@@ -22,21 +24,41 @@ import MaterialDetailPage from "./pages/master/MaterialDetailPage";
 import MaterialAddPage from "./pages/master/MaterialAddPage";
 import TemplateDetailPage from "./pages/master/TemplateDetailPage";
 
-// Komponen Global (jika ada Dashboard/Home)
-// import Dashboard from "./pages/Dashboard";
-
 const App = () => {
   return (
     <Router>
+      {/* 2. Komponen Toaster diletakkan di sini agar bisa tampil di semua halaman */}
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          // Desain default untuk tema Dark Premium Bapak
+          style: {
+            background: "#1e293b", // slate-800
+            color: "#f1f5f9", // slate-100
+            borderRadius: "16px",
+            border: "1px solid #334155", // slate-700
+            padding: "12px 24px",
+            fontSize: "14px",
+            fontWeight: "600",
+          },
+          success: {
+            iconTheme: {
+              primary: "#0ea5e9", // Warna primary biru bapak
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
+
       {/* Wrapper Utama dengan Tema Dark Premium */}
       <div className="bg-background-dark min-h-screen text-slate-100 selection:bg-primary/30">
         <Routes>
-          {/* 1. Alur Masuk Utama (Redirect ke Material sebagai default) */}
+          {/* 1. Alur Masuk Utama */}
           <Route path="/" element={<Navigate to="/master/material" />} />
 
           {/* 2. Grouping Route Master Data */}
           <Route path="/master">
-            {/* Halaman List */}
             <Route path="sdm" element={<SDMListPage />} />
             <Route path="sdm/add" element={<SDMAddPage />} />
             <Route path="sdm/detail/:id" element={<SDMDetailPage />} />
@@ -57,17 +79,9 @@ const App = () => {
               element={<TemplateDetailPage />}
             />
             <Route path="" element={<MasterHubPage />} />
-
-            {/* Halaman Detail & Add (Placeholder untuk pengembangan berikutnya) */}
-            {/* <Route path="material/add" element={<MaterialAddPage />} />
-                <Route path="material/detail/:id" element={<MaterialDetailPage />} /> 
-              */}
           </Route>
 
-          {/* 3. Route Proyek (Jika sudah ada) */}
-          {/* <Route path="/proyek" element={<ProyekPage />} /> */}
-
-          {/* 4. Fallback 404 - Halaman Tidak Ditemukan */}
+          {/* 4. Fallback 404 */}
           <Route
             path="*"
             element={
@@ -79,8 +93,7 @@ const App = () => {
                   Halaman Tidak Ditemukan
                 </h1>
                 <p className="text-slate-400 mb-6 text-sm">
-                  Sepertinya link yang Anda tuju belum tersedia atau sedang
-                  dalam pengembangan.
+                  Sepertinya link yang Anda tuju belum tersedia.
                 </p>
                 <button
                   onClick={() => (window.location.href = "/")}

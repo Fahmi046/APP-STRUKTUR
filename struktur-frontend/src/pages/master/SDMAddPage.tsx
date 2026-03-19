@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createKaryawan } from "../../api/sdmService";
+import toast from "react-hot-toast"; // 1. Import toast
 
 const SDMAddPage = () => {
   const navigate = useNavigate();
 
-  // 1. State untuk menampung data Form
   const [formData, setFormData] = useState({
     nama: "",
-    jabatan: "", // Kita gunakan Jabatan sebagai "Jenis Karyawan" sesuai tabel DB
-    divisi: "Umum", // Default
+    jabatan: "",
+    divisi: "Umum",
     email: "",
     status: "Aktif",
     nip: "",
@@ -17,7 +17,6 @@ const SDMAddPage = () => {
 
   const [loading, setLoading] = useState(false);
 
-  // 2. Handler untuk perubahan input
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -27,21 +26,28 @@ const SDMAddPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 3. Fungsi Simpan ke Database
+  // 2. Fungsi Simpan dengan Toast
   const handleSave = async () => {
+    // Validasi sederhana
     if (!formData.nama || !formData.email) {
-      alert("Nama dan Email wajib diisi!");
+      toast.error("Nama dan Email wajib diisi!", {
+        style: { borderRadius: "12px", background: "#1e293b", color: "#fff" },
+      });
       return;
     }
 
     try {
       setLoading(true);
       await createKaryawan(formData);
-      alert("Karyawan berhasil ditambahkan!");
-      navigate("/master/sdm"); // Kembali ke daftar
+
+      // 3. Notifikasi Berhasil
+      toast.success("Karyawan berhasil ditambahkan!");
+
+      navigate("/master/sdm");
     } catch (error: any) {
       console.error("Gagal simpan:", error);
-      alert(
+      // 4. Notifikasi Gagal
+      toast.error(
         error.response?.data?.message || "Terjadi kesalahan saat menyimpan.",
       );
     } finally {
@@ -50,34 +56,34 @@ const SDMAddPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-background-dark pb-20">
+    <div className="min-h-screen bg-background-dark pb-20 text-white">
       {/* Header Section */}
-      <header className="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-border-dark px-4 py-3 flex items-center justify-between text-white">
+      <header className="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
-          className="text-slate-400 font-medium"
+          className="text-slate-400 font-medium hover:text-white transition-colors"
         >
           Batal
         </button>
-        <h1 className="text-lg font-semibold">Tambah Karyawan</h1>
+        <h1 className="text-lg font-bold">Tambah Karyawan</h1>
         <button
           onClick={handleSave}
           disabled={loading}
-          className="bg-primary text-white px-4 py-1.5 rounded-lg text-sm font-semibold shadow-lg"
+          className="bg-primary text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
         >
           {loading ? "..." : "Simpan"}
         </button>
       </header>
 
-      <main className="p-4 max-w-md mx-auto space-y-6">
-        {/* Profile Photo */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-24 h-24 rounded-full bg-card-dark border-2 border-dashed border-border-dark flex items-center justify-center overflow-hidden transition-colors group-hover:border-primary/50">
-            <span className="material-symbols-outlined text-slate-500 text-3xl">
+      <main className="p-4 max-w-md mx-auto space-y-6 text-center">
+        {/* Profile Photo Placeholder */}
+        <div className="flex flex-col items-center mb-2">
+          <div className="w-24 h-24 rounded-full bg-slate-900 border-2 border-dashed border-slate-700 flex items-center justify-center overflow-hidden transition-all hover:border-primary/50 group cursor-pointer">
+            <span className="material-symbols-outlined text-slate-600 text-3xl group-hover:text-primary transition-colors">
               add_a_photo
             </span>
           </div>
-          <p className="text-[10px] text-slate-500 mt-3 uppercase tracking-widest font-bold text-white">
+          <p className="text-[10px] text-slate-500 mt-3 uppercase tracking-widest font-black">
             Foto Profil (Opsional)
           </p>
         </div>
@@ -86,7 +92,7 @@ const SDMAddPage = () => {
         <section className="space-y-5">
           {/* Nama */}
           <div className="space-y-2 text-left">
-            <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+            <label className="text-xs font-bold text-slate-500 uppercase ml-1 tracking-wider">
               Nama Lengkap
             </label>
             <input
@@ -94,14 +100,14 @@ const SDMAddPage = () => {
               value={formData.nama}
               onChange={handleChange}
               type="text"
-              className="w-full bg-card-dark border border-border-dark rounded-xl px-4 py-3.5 text-slate-100 outline-none focus:border-primary"
+              className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-slate-100 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
               placeholder="Masukkan nama lengkap"
             />
           </div>
 
-          {/* Email (Penting untuk DB) */}
+          {/* Email */}
           <div className="space-y-2 text-left">
-            <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+            <label className="text-xs font-bold text-slate-500 uppercase ml-1 tracking-wider">
               Email Perusahaan
             </label>
             <input
@@ -109,14 +115,14 @@ const SDMAddPage = () => {
               value={formData.email}
               onChange={handleChange}
               type="email"
-              className="w-full bg-card-dark border border-border-dark rounded-xl px-4 py-3.5 text-slate-100 outline-none focus:border-primary"
+              className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-slate-100 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
               placeholder="contoh@perusahaan.com"
             />
           </div>
 
-          {/* Jabatan / Jenis */}
+          {/* Jabatan */}
           <div className="space-y-2 text-left">
-            <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+            <label className="text-xs font-bold text-slate-500 uppercase ml-1 tracking-wider">
               Jabatan / Posisi
             </label>
             <div className="relative">
@@ -124,7 +130,7 @@ const SDMAddPage = () => {
                 name="jabatan"
                 value={formData.jabatan}
                 onChange={handleChange}
-                className="w-full bg-card-dark border border-border-dark rounded-xl px-4 py-3.5 text-slate-100 appearance-none outline-none focus:border-primary"
+                className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-slate-100 appearance-none outline-none focus:border-primary transition-all"
               >
                 <option value="">Pilih Jabatan</option>
                 <option value="Admin">Admin</option>
@@ -132,7 +138,7 @@ const SDMAddPage = () => {
                 <option value="Logistik">Logistik</option>
                 <option value="Worker">Worker</option>
               </select>
-              <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
+              <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
                 expand_more
               </span>
             </div>
@@ -140,7 +146,7 @@ const SDMAddPage = () => {
 
           {/* NIP */}
           <div className="space-y-2 text-left">
-            <label className="text-xs font-bold text-slate-400 uppercase ml-1">
+            <label className="text-xs font-bold text-slate-500 uppercase ml-1 tracking-wider">
               NIP (Nomor Induk)
             </label>
             <input
@@ -148,16 +154,16 @@ const SDMAddPage = () => {
               value={formData.nip}
               onChange={handleChange}
               type="text"
-              className="w-full bg-card-dark border border-border-dark rounded-xl px-4 py-3.5 text-slate-100 outline-none focus:border-primary"
+              className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-slate-100 outline-none focus:border-primary transition-all"
               placeholder="Contoh: 19920801"
             />
           </div>
 
           {/* Toggle Status */}
-          <div className="bg-card-dark border border-border-dark rounded-xl p-4 flex items-center justify-between">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
             <div className="text-left">
               <h3 className="text-slate-100 font-bold text-sm">Status Aktif</h3>
-              <p className="text-[10px] text-slate-500 uppercase">
+              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tight">
                 Aktifkan untuk akses sistem
               </p>
             </div>
@@ -173,16 +179,16 @@ const SDMAddPage = () => {
                 }
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+              <div className="w-12 h-6 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
             </label>
           </div>
         </section>
 
-        <div className="pt-8">
+        <div className="pt-6">
           <button
             onClick={handleSave}
             disabled={loading}
-            className="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-xl disabled:opacity-50"
+            className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-50"
           >
             {loading ? "Sedang Menyimpan..." : "Simpan Data Karyawan"}
           </button>
