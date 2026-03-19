@@ -14,6 +14,7 @@ import VendorListPage from "./pages/master/VendorListPage"; // Pastikan file ini
 import MasterHubPage from "./pages/master/MasterHubPage";
 import SDMListPage from "./pages/master/SDMListPage";
 import SDMDetailPage from "./pages/master/SDMDetailPage";
+import SDMEditPage from "./pages/master/SDMEditPage";
 import VendorDetailPage from "./pages/master/VendorDetailPage";
 import VendorAddPage from "./pages/master/VendorAddPage";
 import TemplateAddPage from "./pages/master/TemplateAddPage";
@@ -39,6 +40,7 @@ const App = () => {
             <Route path="sdm" element={<SDMListPage />} />
             <Route path="sdm/add" element={<SDMAddPage />} />
             <Route path="sdm/detail/:id" element={<SDMDetailPage />} />
+            <Route path="sdm/edit/:id" element={<SDMEditPage />} />
             <Route path="vendor" element={<VendorListPage />} />
             <Route path="vendor/add" element={<VendorAddPage />} />
             <Route path="vendor/detail/:id" element={<VendorDetailPage />} />

@@ -34,4 +34,43 @@ class KaryawanController extends Controller
         if (!$karyawan) return response()->json(['message' => 'Data tidak ditemukan'], 404);
         return response()->json($karyawan);
     }
+
+    public function update(Request $request, $id)
+    {
+        // 1. Cari datanya
+        $karyawan = Karyawan::find($id);
+
+        // 2. Jika tidak ketemu, kasih tau React
+        if (!$karyawan) {
+            return response()->json(['message' => 'Data tidak ditemukan'], 404);
+        }
+
+        // 3. Update datanya (Pastikan field sesuai dengan database)
+        $karyawan->update($request->all());
+
+        // 4. Kirim respon balik ke React
+        return response()->json([
+            'message' => 'Data berhasil diupdate',
+            'data' => $karyawan
+        ], 200);
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $karyawan = Karyawan::findOrFail($id); // Pakai findOrFail supaya otomatis error 404 kalau ID tidak ada
+            $karyawan->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data berhasil dihapus'
+            ], 200);
+        } catch (\Exception $e) {
+            // Ini akan menangkap pesan error asli kalau gagal
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

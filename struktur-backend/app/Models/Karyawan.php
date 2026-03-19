@@ -20,15 +20,7 @@ class Karyawan extends Model
      * Kolom mana saja yang boleh diisi (Mass Assignment).
      * Pastikan kolom-kolom ini sesuai dengan file migration Anda.
      */
-    protected $fillable = [
-        'nama',
-        'nip',
-        'jabatan',
-        'divisi',
-        'email',
-        'status',
-        'avatar',
-    ];
+    protected $fillable = ['nama', 'email', 'jabatan', 'divisi', 'status', 'nip', 'avatar'];
 
     /**
      * Casting tipe data jika diperlukan.

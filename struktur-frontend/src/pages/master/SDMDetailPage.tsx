@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react"; // Tambahkan useEffect & useState
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getKaryawanDetail } from "../../api/sdmService";
+import { getKaryawanDetail, deleteKaryawan } from "../../api/sdmService";
 
 const SDMDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  // State untuk data dari Backend
+  // State Utama
   const [employee, setEmployee] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -29,11 +29,27 @@ const SDMDetailPage = () => {
     fetchDetail();
   }, [id]);
 
+  // 2. Fungsi Hapus Data
+  const handleDelete = async () => {
+    try {
+      setLoading(true);
+      if (id) {
+        await deleteKaryawan(id);
+        setIsDeleteModalOpen(false);
+        alert("Karyawan berhasil dihapus!");
+        navigate("/master/sdm");
+      }
+    } catch (error) {
+      alert("Gagal menghapus data. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const closeOnOverlay = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) setIsDeleteModalOpen(false);
   };
 
-  // Fungsi pembantu Inisial Nama
   const getInisial = (nama: string) => {
     return nama
       ? nama
@@ -45,7 +61,6 @@ const SDMDetailPage = () => {
       : "??";
   };
 
-  // Tampilan Loading
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background-dark text-white">
@@ -54,7 +69,6 @@ const SDMDetailPage = () => {
     );
   }
 
-  // Tampilan jika data tidak ada
   if (!employee) {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-background-dark text-white p-6 text-center">
@@ -68,13 +82,6 @@ const SDMDetailPage = () => {
       </div>
     );
   }
-
-  const handleDelete = () => {
-    console.log(`Menghapus karyawan dengan ID: ${id}`);
-    // Nanti tambahkan API delete di sini
-    setIsDeleteModalOpen(false);
-    navigate("/master/sdm");
-  };
 
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-background-dark overflow-x-hidden pb-32">
@@ -134,7 +141,7 @@ const SDMDetailPage = () => {
         </div>
       </div>
 
-      {/* Contact Info Card */}
+      {/* Info Card */}
       <div className="px-4 py-2">
         <div className="bg-slate-900/40 rounded-xl border border-slate-800 p-5 space-y-5 text-left">
           <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">
@@ -167,29 +174,12 @@ const SDMDetailPage = () => {
         </div>
       </div>
 
-      {/* Project History Section */}
-      <div className="px-4 pt-6">
-        <div className="flex items-center justify-between mb-4 px-1">
-          <h3 className="text-slate-100 text-lg font-bold tracking-tight">
-            Riwayat Proyek
-          </h3>
-          <button className="text-primary text-xs font-bold uppercase tracking-wider">
-            Lihat Semua
-          </button>
-        </div>
-        <div className="bg-slate-900/40 rounded-xl border border-slate-800 p-4 flex flex-col gap-3 text-center py-10">
-          <span className="material-symbols-outlined text-slate-700 text-4xl">
-            inventory_2
-          </span>
-          <p className="text-slate-500 text-xs italic uppercase tracking-widest">
-            Belum ada riwayat proyek
-          </p>
-        </div>
-      </div>
-
-      {/* Bottom Actions */}
+      {/* Footer Actions */}
       <div className="mt-10 mb-6 p-4 border-t border-slate-800/50 flex gap-3">
-        <button className="flex-1 bg-primary text-white font-bold py-4 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98] transition-all">
+        <button
+          onClick={() => navigate(`/master/sdm/edit/${employee.id}`)} // Arahkan ke halaman edit
+          className="flex-1 bg-primary text-white font-bold py-4 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all"
+        >
           <span className="material-symbols-outlined text-xl">edit</span>
           Edit Profil
         </button>
@@ -201,8 +191,45 @@ const SDMDetailPage = () => {
         </button>
       </div>
 
-      {/* Modal Delete tetap sama */}
-      {/* ... (Modal delete Anda di sini) ... */}
+      {/* --- MODAL DELETE --- */}
+      {isDeleteModalOpen && (
+        <div
+          onClick={closeOnOverlay}
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity"
+        >
+          <div className="bg-slate-900 w-full max-w-sm rounded-2xl border border-slate-800 p-6 shadow-2xl animate-in fade-in slide-in-from-bottom-10 duration-300">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-red-500 text-4xl">
+                  warning
+                </span>
+              </div>
+              <h3 className="text-slate-100 text-lg font-bold">
+                Hapus Karyawan?
+              </h3>
+              <p className="text-slate-400 text-sm mt-2">
+                Apakah Anda yakin ingin menghapus{" "}
+                <span className="text-white font-bold">{employee.nama}</span>?
+                Tindakan ini permanen.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 mt-8">
+              <button
+                onClick={handleDelete}
+                className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-red-500/20"
+              >
+                Ya, Hapus Sekarang
+              </button>
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="w-full bg-transparent text-slate-400 font-semibold py-3 rounded-xl hover:text-slate-100 transition-colors"
+              >
+                Batalkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
