@@ -103,7 +103,7 @@ const SDMDetailPage = () => {
       {/* Header */}
       <div className="flex items-center bg-background-dark/80 backdrop-blur-md sticky top-0 z-50 p-4 justify-between border-b border-slate-800">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/master/sdm")}
           className="text-slate-100 flex size-10 shrink-0 items-center justify-center cursor-pointer hover:bg-slate-800 rounded-full transition-colors"
         >
           <span className="material-symbols-outlined">arrow_back</span>
@@ -125,7 +125,7 @@ const SDMDetailPage = () => {
             <div className="w-24 h-24 rounded-full border-4 border-slate-800 p-1 bg-primary/10 flex items-center justify-center overflow-hidden">
               {employee.avatar ? (
                 <img
-                  src={employee.avatar}
+                  src={`http://127.0.0.1:8000/storage/${employee.avatar}`}
                   className="w-full h-full object-cover"
                   alt="profile"
                 />

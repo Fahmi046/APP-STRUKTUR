@@ -5,8 +5,9 @@ import BottomNav from "../../components/BottomNav";
 
 const SDMListPage = () => {
   // 1. Buat state untuk menampung data dari Laravel
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [allEmployees, setAllEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 2. Ambil data saat komponen pertama kali muncul
   useEffect(() => {
@@ -14,7 +15,7 @@ const SDMListPage = () => {
       try {
         setLoading(true);
         const data = await getKaryawan();
-        setEmployees(data);
+        setAllEmployees(data);
       } catch (error) {
         console.error("Gagal load data SDM:", error);
       } finally {
@@ -24,6 +25,28 @@ const SDMListPage = () => {
 
     fetchSdm();
   }, []);
+
+  // 3. Filter data berdasarkan search query
+  const filteredEmployees = allEmployees.filter((emp) => {
+    const lowerQuery = searchQuery.toLowerCase();
+    return (
+      emp.nama.toLowerCase().includes(lowerQuery) ||
+      emp.jabatan.toLowerCase().includes(lowerQuery) ||
+      emp.divisi.toLowerCase().includes(lowerQuery)
+    );
+  });
+
+  // 4. Tampilkan 10 terbaru (diurutkan berdasarkan created_at) jika tidak ada search, semua hasil jika ada search
+  const displayedEmployees =
+    searchQuery === ""
+      ? [...filteredEmployees]
+          .sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime(),
+          )
+          .slice(0, 10)
+      : filteredEmployees;
 
   // Fungsi pembantu untuk inisial (karena di DB mungkin tidak ada kolom inisial)
   const getInisial = (nama: string) => {
@@ -57,6 +80,8 @@ const SDMListPage = () => {
             search
           </span>
           <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-slate-100 dark:bg-card-dark border-none rounded-xl py-3 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-white"
             placeholder="Cari nama atau jabatan..."
           />
@@ -70,9 +95,9 @@ const SDMListPage = () => {
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-4"></div>
             <p>Mengambil data dari server...</p>
           </div>
-        ) : employees.length > 0 ? (
+        ) : displayedEmployees.length > 0 ? (
           // 4. Mapping data asli dari Laravel
-          employees.map((emp) => (
+          displayedEmployees.map((emp) => (
             <Link
               to={`/master/sdm/detail/${emp.id}`}
               key={emp.id}
@@ -81,7 +106,7 @@ const SDMListPage = () => {
               {/* Cek jika ada avatar URL, tampilkan gambar. Jika tidak, tampilkan inisial */}
               {emp.avatar ? (
                 <img
-                  src={emp.avatar}
+                  src={`http://127.0.0.1:8000/storage/${emp.avatar}`}
                   alt={emp.nama}
                   className="w-12 h-12 rounded-full object-cover"
                 />
@@ -130,7 +155,11 @@ const SDMListPage = () => {
             <span className="material-symbols-outlined text-6xl opacity-20">
               group_off
             </span>
-            <p className="mt-2">Belum ada data karyawan.</p>
+            <p className="mt-2">
+              {searchQuery
+                ? "Tidak ada hasil pencarian."
+                : "Belum ada data karyawan."}
+            </p>
           </div>
         )}
       </main>

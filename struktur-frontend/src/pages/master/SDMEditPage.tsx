@@ -6,6 +6,7 @@ import toast from "react-hot-toast"; // 1. Import toast
 const SDMEditPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     nama: "",
@@ -18,6 +19,9 @@ const SDMEditPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   // 1. Ambil data lama dari Laravel
   useEffect(() => {
@@ -33,6 +37,9 @@ const SDMEditPage = () => {
             status: data.status || "Aktif",
             nip: data.nip || "",
           });
+          if (data.avatar) {
+            setCurrentAvatar(`http://127.0.0.1:8000/storage/${data.avatar}`);
+          }
         }
       } catch (error) {
         toast.error("Gagal memuat data karyawan"); // Ganti alert
@@ -50,6 +57,32 @@ const SDMEditPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("File harus berupa gambar!");
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Ukuran file maksimal 5MB!");
+        return;
+      }
+
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPhotoPreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // 2. Kirim perubahan ke Database dengan Toast
   const handleUpdate = async () => {
     if (!formData.nama || !formData.email) {
@@ -60,7 +93,22 @@ const SDMEditPage = () => {
     try {
       setSaving(true);
       if (id) {
-        await updateKaryawan(id, formData);
+        let updateData = formData;
+
+        // Jika ada foto baru, kirim dengan FormData
+        if (photoFile) {
+          const formDataWithFile = new FormData();
+          formDataWithFile.append("nama", formData.nama);
+          formDataWithFile.append("jabatan", formData.jabatan);
+          formDataWithFile.append("divisi", formData.divisi);
+          formDataWithFile.append("email", formData.email);
+          formDataWithFile.append("status", formData.status);
+          formDataWithFile.append("nip", formData.nip);
+          formDataWithFile.append("avatar", photoFile);
+          updateData = formDataWithFile;
+        }
+
+        await updateKaryawan(id, updateData);
 
         // Notifikasi Sukses
         toast.success("Profil berhasil diperbarui!");
@@ -106,12 +154,39 @@ const SDMEditPage = () => {
       <main className="p-4 max-w-md mx-auto space-y-6">
         {/* Profile Info Header */}
         <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl text-center">
-          <div className="w-20 h-20 bg-primary/10 text-primary rounded-full mx-auto flex items-center justify-center mb-3 border border-primary/20">
-            <span className="text-2xl font-black">
-              {formData.nama.charAt(0).toUpperCase()}
-            </span>
+          <div
+            onClick={handlePhotoClick}
+            className="w-20 h-20 rounded-full mx-auto flex items-center justify-center mb-3 border-2 border-dashed border-slate-700 overflow-hidden transition-all hover:border-primary/50 cursor-pointer bg-primary/10"
+          >
+            {photoPreview ? (
+              <img
+                src={photoPreview}
+                alt="Preview"
+                className="w-full h-full object-cover"
+              />
+            ) : currentAvatar ? (
+              <img
+                src={currentAvatar}
+                alt={formData.nama}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-2xl font-black text-primary">
+                {formData.nama.charAt(0).toUpperCase()}
+              </span>
+            )}
           </div>
-          <h2 className="font-bold text-slate-200">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+            className="hidden"
+          />
+          <p className="text-[10px] text-slate-500 uppercase font-bold mt-2">
+            {photoPreview ? "Klik untuk ganti foto" : "Klik untuk upload foto"}
+          </p>
+          <h2 className="font-bold text-slate-200 mt-3">
             {formData.nama || "Tanpa Nama"}
           </h2>
           <p className="text-xs text-slate-500 uppercase tracking-widest mt-1 font-bold">

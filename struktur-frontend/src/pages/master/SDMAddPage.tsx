@@ -5,6 +5,7 @@ import toast from "react-hot-toast"; // 1. Import toast
 
 const SDMAddPage = () => {
   const navigate = useNavigate();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     nama: "",
@@ -15,6 +16,8 @@ const SDMAddPage = () => {
     nip: "",
   });
 
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (
@@ -24,6 +27,36 @@ const SDMAddPage = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validasi tipe file
+      if (!file.type.startsWith("image/")) {
+        toast.error("File harus berupa gambar!");
+        return;
+      }
+
+      // Validasi ukuran file (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Ukuran file maksimal 5MB!");
+        return;
+      }
+
+      setPhotoFile(file);
+
+      // Buat preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPhotoPreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // 2. Fungsi Simpan dengan Toast
@@ -38,7 +71,22 @@ const SDMAddPage = () => {
 
     try {
       setLoading(true);
-      await createKaryawan(formData);
+
+      // Jika ada foto, kirim dengan FormData
+      if (photoFile) {
+        const formDataWithFile = new FormData();
+        formDataWithFile.append("nama", formData.nama);
+        formDataWithFile.append("jabatan", formData.jabatan);
+        formDataWithFile.append("divisi", formData.divisi);
+        formDataWithFile.append("email", formData.email);
+        formDataWithFile.append("status", formData.status);
+        formDataWithFile.append("nip", formData.nip);
+        formDataWithFile.append("avatar", photoFile);
+
+        await createKaryawan(formDataWithFile);
+      } else {
+        await createKaryawan(formData);
+      }
 
       // 3. Notifikasi Berhasil
       toast.success("Karyawan berhasil ditambahkan!");
@@ -78,13 +126,31 @@ const SDMAddPage = () => {
       <main className="p-4 max-w-md mx-auto space-y-6 text-center">
         {/* Profile Photo Placeholder */}
         <div className="flex flex-col items-center mb-2">
-          <div className="w-24 h-24 rounded-full bg-slate-900 border-2 border-dashed border-slate-700 flex items-center justify-center overflow-hidden transition-all hover:border-primary/50 group cursor-pointer">
-            <span className="material-symbols-outlined text-slate-600 text-3xl group-hover:text-primary transition-colors">
-              add_a_photo
-            </span>
+          <div
+            onClick={handlePhotoClick}
+            className="w-24 h-24 rounded-full bg-slate-900 border-2 border-dashed border-slate-700 flex items-center justify-center overflow-hidden transition-all hover:border-primary/50 group cursor-pointer relative"
+          >
+            {photoPreview ? (
+              <img
+                src={photoPreview}
+                alt="Preview"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="material-symbols-outlined text-slate-600 text-3xl group-hover:text-primary transition-colors">
+                add_a_photo
+              </span>
+            )}
           </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+            className="hidden"
+          />
           <p className="text-[10px] text-slate-500 mt-3 uppercase tracking-widest font-black">
-            Foto Profil (Opsional)
+            {photoPreview ? "Klik untuk ganti foto" : "Klik untuk upload foto"}
           </p>
         </div>
 

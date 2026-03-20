@@ -20,10 +20,20 @@ class KaryawanController extends Controller
         $validated = $request->validate([
             'nama' => 'required',
             'email' => 'required|email|unique:karyawans',
-            'jabatan' => 'required'
+            'jabatan' => 'required',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120' // Max 5MB
         ]);
 
-        $karyawan = Karyawan::create($request->all());
+        $data = $request->all();
+
+        // Proses upload avatar jika ada file
+        if ($request->hasFile('avatar')) {
+            $avatar = $request->file('avatar');
+            $avatarPath = $avatar->store('avatars', 'public'); // Simpan ke storage/app/public/avatars
+            $data['avatar'] = $avatarPath;
+        }
+
+        $karyawan = Karyawan::create($data);
         return response()->json($karyawan, 201);
     }
 
@@ -45,10 +55,31 @@ class KaryawanController extends Controller
             return response()->json(['message' => 'Data tidak ditemukan'], 404);
         }
 
-        // 3. Update datanya (Pastikan field sesuai dengan database)
-        $karyawan->update($request->all());
+        // 3. Validasi input
+        $validated = $request->validate([
+            'nama' => 'sometimes|required',
+            'email' => 'sometimes|required|email|unique:karyawans,email,' . $id,
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120' // Max 5MB
+        ]);
 
-        // 4. Kirim respon balik ke React
+        $data = $request->all();
+
+        // 4. Proses upload avatar jika ada file baru
+        if ($request->hasFile('avatar')) {
+            // Hapus file lama jika ada
+            if ($karyawan->avatar && \Storage::disk('public')->exists($karyawan->avatar)) {
+                \Storage::disk('public')->delete($karyawan->avatar);
+            }
+
+            $avatar = $request->file('avatar');
+            $avatarPath = $avatar->store('avatars', 'public');
+            $data['avatar'] = $avatarPath;
+        }
+
+        // 5. Update datanya
+        $karyawan->update($data);
+
+        // 6. Kirim respon balik ke React
         return response()->json([
             'message' => 'Data berhasil diupdate',
             'data' => $karyawan

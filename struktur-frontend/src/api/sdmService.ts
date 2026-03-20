@@ -28,7 +28,19 @@ export const getKaryawanDetail = async (id: string | number) => {
 // 3. Tambah Karyawan Baru
 export const createKaryawan = async (data: any) => {
   try {
-    const response = await axios.post(`${API_URL}/sdm`, data);
+    // Jika data adalah FormData (dari upload file), jangan ubah
+    // Jika data adalah object biasa, convert ke FormData untuk consistency
+    let requestData = data;
+    let headers: any = {};
+
+    if (data instanceof FormData) {
+      // FormData akan di-set otomatis oleh axios dengan Content-Type: multipart/form-data
+      requestData = data;
+    }
+
+    const response = await axios.post(`${API_URL}/sdm`, requestData, {
+      headers,
+    });
     return response.data;
   } catch (error) {
     console.error("Gagal menambah SDM:", error);
@@ -39,9 +51,22 @@ export const createKaryawan = async (data: any) => {
 // 4. Update/Edit Data Karyawan
 export const updateKaryawan = async (id: string | number, data: any) => {
   try {
-    // Kita gunakan PUT untuk update
-    const response = await axios.put(`${API_URL}/sdm/${id}`, data);
-    return response.data;
+    // Jika FormData (ada file upload), gunakan POST dengan method spoofing
+    if (data instanceof FormData) {
+      // Tambahkan _method: PUT agar Laravel tahu ini adalah PUT request
+      data.append("_method", "PUT");
+
+      const response = await axios.post(`${API_URL}/sdm/${id}`, data, {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      });
+      return response.data;
+    } else {
+      // Jika regular JSON data, gunakan PUT langsung
+      const response = await axios.put(`${API_URL}/sdm/${id}`, data);
+      return response.data;
+    }
   } catch (error) {
     console.error("Gagal update SDM:", error);
     throw error;
