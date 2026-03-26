@@ -1,24 +1,82 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { MOCK_VENDOR } from "../../data/vendorStore";
+import { getVendorDetail, deleteVendor } from "../../api/vendorService";
+import toast from "react-hot-toast";
 
 const VendorDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [vendor, setVendor] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // Cari vendor berdasarkan ID URL
-  const vendor = MOCK_VENDOR.find((v) => v.id === Number(id));
+  // 1. Ambil data vendor dari API saat halaman dibuka
+  useEffect(() => {
+    const fetchDetail = async () => {
+      try {
+        setLoading(true);
+        if (id) {
+          const data = await getVendorDetail(id);
+          setVendor(data);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDetail();
+  }, [id]);
+
+  // 2. Fungsi Hapus Data
+  const handleDelete = async () => {
+    try {
+      setLoading(true);
+      if (id) {
+        await deleteVendor(id);
+        setIsDeleteModalOpen(false);
+
+        toast.success("Vendor berhasil dihapus!", {
+          style: {
+            borderRadius: "12px",
+            background: "#1e293b",
+            color: "#fff",
+            border: "1px solid #334155",
+          },
+          iconTheme: {
+            primary: "#0ea5e9",
+            secondary: "#fff",
+          },
+        });
+
+        navigate("/master/vendor");
+      }
+    } catch (error) {
+      toast.error("Gagal menghapus data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const closeOnOverlay = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) setIsDeleteModalOpen(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background-dark text-white">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (!vendor) {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-background-dark text-white p-6 text-center">
-        <h2 className="text-xl font-bold text-slate-100">
-          Vendor tidak ditemukan
-        </h2>
+        <h2 className="text-xl font-bold">Vendor tidak ditemukan</h2>
         <button
           onClick={() => navigate("/master/vendor")}
-          className="mt-4 text-primary font-bold"
+          className="mt-4 text-primary font-bold uppercase tracking-widest text-xs"
         >
           Kembali ke Daftar
         </button>
@@ -26,19 +84,12 @@ const VendorDetailPage = () => {
     );
   }
 
-  const handleDelete = () => {
-    // Logika hapus (Minggu 1: Akan dihubungkan ke API Laravel)
-    console.log("Menghapus Vendor ID:", id);
-    setIsDeleteModalOpen(false);
-    navigate("/master/vendor");
-  };
-
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden pb-32">
       {/* Header */}
       <div className="flex items-center bg-background-light dark:bg-background-dark p-4 sticky top-0 z-10 border-b border-slate-200 dark:border-border-dark justify-between">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/master/vendor")}
           className="text-slate-900 dark:text-slate-100 flex size-10 items-center justify-center transition-active active:scale-90"
         >
           <span className="material-symbols-outlined">arrow_back</span>
@@ -62,37 +113,15 @@ const VendorDetailPage = () => {
           <div className="flex flex-col items-center justify-center rounded-xl p-6 bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark shadow-sm">
             <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <span className="material-symbols-outlined text-primary text-4xl">
-                {vendor.icon || "domain"}
+                business
               </span>
             </div>
             <h1 className="text-slate-900 dark:text-white text-2xl font-bold leading-tight mb-1 text-center">
               {vendor.nama}
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-              {vendor.deskripsi}
+              {vendor.status === "Aktif" ? "✓ Aktif" : "⊘ Non-Aktif"}
             </p>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="px-4 pb-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col p-4 rounded-xl bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark text-center">
-              <span className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase mb-1">
-                Total Material
-              </span>
-              <p className="text-primary text-xl font-bold">
-                {vendor.totalMaterial} Material
-              </p>
-            </div>
-            <div className="flex flex-col p-4 rounded-xl bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark text-center">
-              <span className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase mb-1">
-                Status
-              </span>
-              <p className="text-green-500 text-xl font-bold">
-                {vendor.poAktif} PO Aktif
-              </p>
-            </div>
           </div>
         </div>
 
@@ -103,10 +132,18 @@ const VendorDetailPage = () => {
               Informasi Kontak
             </div>
             {[
-              { icon: "call", label: "Telepon", value: vendor.hp },
+              { icon: "call", label: "Kontak", value: vendor.kontak || "-" },
               { icon: "mail", label: "Email", value: vendor.email },
-              { icon: "location_on", label: "Alamat", value: vendor.alamat },
-              { icon: "assignment_ind", label: "NPWP", value: vendor.npwp },
+              {
+                icon: "location_on",
+                label: "Alamat",
+                value: vendor.alamat || "-",
+              },
+              {
+                icon: "assignment_ind",
+                label: "NPWP",
+                value: vendor.npwp || "-",
+              },
             ].map((info, i) => (
               <div
                 key={i}
@@ -119,43 +156,6 @@ const VendorDetailPage = () => {
                   <p className="text-slate-400 text-xs">{info.label}</p>
                   <p className="text-slate-900 dark:text-slate-100 text-sm font-medium whitespace-pre-wrap">
                     {info.value}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Material Section */}
-        <div className="px-4 pb-8">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-slate-900 dark:text-white font-bold">
-              Material yang Dipasok
-            </h3>
-            <button className="text-primary text-sm font-semibold hover:underline">
-              Lihat Semua
-            </button>
-          </div>
-          <div className="space-y-3">
-            {vendor.materials.map((mat) => (
-              <div
-                key={mat.id}
-                className="flex items-center gap-4 p-3 bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark rounded-xl transition-active active:scale-[0.98]"
-              >
-                <div className="size-12 rounded-lg bg-slate-100 dark:bg-border-dark flex items-center justify-center overflow-hidden text-slate-400">
-                  <span className="material-symbols-outlined">inventory_2</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-slate-900 dark:text-slate-100 text-sm font-bold">
-                    {mat.nama}
-                  </p>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs">
-                    {mat.satuan}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-slate-900 dark:text-slate-100 text-sm font-bold">
-                    Rp {mat.harga.toLocaleString()}
                   </p>
                 </div>
               </div>

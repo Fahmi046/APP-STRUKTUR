@@ -1,12 +1,13 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createMaterial } from "../../api/materialService";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { getMaterialDetail, updateMaterial } from "../../api/materialService";
 import toast from "react-hot-toast";
 import BottomNav from "../../components/BottomNav";
 
-const MaterialAddPage = () => {
+const MaterialEditPage = () => {
   const navigate = useNavigate();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const { id } = useParams();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     nama: "",
@@ -20,9 +21,44 @@ const MaterialAddPage = () => {
     vendor: "",
   });
 
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Fetch detail untuk pre-fill form
+  useEffect(() => {
+    const fetchDetail = async () => {
+      try {
+        setLoading(true);
+        const data = await getMaterialDetail(id as string);
+        setFormData({
+          nama: data.nama || "",
+          kategori: data.kategori || "",
+          merk: data.merk || "",
+          tipe: data.tipe || "",
+          harga: data.harga ? data.harga.toString() : "",
+          satuan: data.satuan || "pcs",
+          stok: data.stok ? data.stok.toString() : "",
+          min_stok: data.min_stok ? data.min_stok.toString() : "5",
+          vendor: data.vendor || "",
+        });
+
+        // Set current image if exists
+        if (data.image) {
+          setCurrentImage(`http://127.0.0.1:8000/storage/${data.image}`);
+        }
+      } catch (error) {
+        console.error("Gagal load data:", error);
+        toast.error("Gagal memuat data material.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDetail();
+  }, [id]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -36,56 +72,66 @@ const MaterialAddPage = () => {
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Validasi tipe file
-      if (!file.type.startsWith("image/")) {
-        toast.error("File harus berupa gambar!");
-        return;
-      }
+    if (!file) return;
 
-      // Validasi ukuran file (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Ukuran file maksimal 5MB!");
-        return;
-      }
-
-      setPhotoFile(file);
-
-      // Buat preview
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setPhotoPreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    // Validasi tipe file
+    if (!file.type.startsWith("image/")) {
+      toast.error("File harus berupa gambar!");
+      return;
     }
+
+    // Validasi ukuran file (max 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error("Ukuran gambar tidak boleh lebih dari 5MB!");
+      return;
+    }
+
+    // Set photo file dan preview
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSave = async () => {
-    // Validasi
     if (!formData.nama) {
       toast.error("Nama Material wajib diisi!");
       return;
     }
 
     try {
-      setLoading(true);
+      setSaving(true);
 
-      // Jika ada foto, kirim dengan FormData
       if (photoFile) {
-        const formDataWithFile = new FormData();
-        formDataWithFile.append("nama", formData.nama);
-        formDataWithFile.append("kategori", formData.kategori);
-        formDataWithFile.append("merk", formData.merk);
-        formDataWithFile.append("tipe", formData.tipe);
-        formDataWithFile.append("harga", formData.harga || "0");
-        formDataWithFile.append("satuan", formData.satuan);
-        formDataWithFile.append("stok", formData.stok || "0");
-        formDataWithFile.append("min_stok", formData.min_stok || "5");
-        formDataWithFile.append("vendor", formData.vendor);
-        formDataWithFile.append("image", photoFile);
+        // Send as FormData if there's a new photo
+        const formDataToSend = new FormData();
+        formDataToSend.append("nama", formData.nama);
+        formDataToSend.append("kategori", formData.kategori || "");
+        formDataToSend.append("merk", formData.merk || "");
+        formDataToSend.append("tipe", formData.tipe || "");
+        formDataToSend.append(
+          "harga",
+          formData.harga ? parseFloat(formData.harga).toString() : "0",
+        );
+        formDataToSend.append("satuan", formData.satuan || "pcs");
+        formDataToSend.append(
+          "stok",
+          formData.stok ? parseInt(formData.stok).toString() : "0",
+        );
+        formDataToSend.append(
+          "min_stok",
+          formData.min_stok ? parseInt(formData.min_stok).toString() : "5",
+        );
+        formDataToSend.append("vendor", formData.vendor || "");
+        formDataToSend.append("image", photoFile);
+        formDataToSend.append("_method", "PUT");
 
-        await createMaterial(formDataWithFile);
+        await updateMaterial(id as string, formDataToSend);
       } else {
+        // Send as JSON if no new photo
         const dataToSend = {
           ...formData,
           harga: formData.harga ? parseFloat(formData.harga) : 0,
@@ -93,20 +139,31 @@ const MaterialAddPage = () => {
           min_stok: formData.min_stok ? parseInt(formData.min_stok) : 5,
         };
 
-        await createMaterial(dataToSend);
+        await updateMaterial(id as string, dataToSend);
       }
 
-      toast.success("Material berhasil ditambahkan!");
-      navigate("/master/material");
+      toast.success("Material berhasil diupdate!");
+      navigate(`/master/material/detail/${id}`);
     } catch (error: any) {
       console.error("Gagal simpan:", error);
       toast.error(
         error.response?.data?.message || "Terjadi kesalahan saat menyimpan.",
       );
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background-dark flex items-center justify-center text-slate-400">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-4 mx-auto"></div>
+          <p>Mengambil data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -119,70 +176,66 @@ const MaterialAddPage = () => {
           >
             Batal
           </button>
-          <h1 className="text-white text-lg font-bold">Tambah Material</h1>
+          <h1 className="text-white text-lg font-bold">Edit Material</h1>
           <button
             onClick={handleSave}
-            disabled={loading}
+            disabled={saving}
             className="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg text-sm font-bold transition-transform active:scale-95 shadow-lg shadow-primary/20 disabled:opacity-50"
           >
-            {loading ? "..." : "Simpan"}
+            {saving ? "..." : "Simpan"}
           </button>
         </header>
 
         {/* Main Content - Scroll Mengikuti Body */}
         <main className="p-4 space-y-6 max-w-md mx-auto">
-          {/* Card 1: Foto Material */}
-          <section className="bg-card-dark p-5 rounded-xl border border-slate-800 shadow-sm">
-            <h3 className="text-white font-bold mb-4 flex items-center gap-2 text-sm uppercase tracking-wider">
+          {/* Hidden File Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+            className="hidden"
+          />
+
+          {/* Card 0: Photo Upload */}
+          <section className="bg-card-dark p-5 rounded-xl border border-slate-800 space-y-4 shadow-sm">
+            <h3 className="text-white font-bold mb-2 flex items-center gap-2 text-sm uppercase tracking-wider">
               <span className="material-symbols-outlined text-primary text-xl">
                 image
               </span>
               Foto Material
             </h3>
-            <div className="flex flex-col items-center gap-4">
-              <div
-                onClick={handlePhotoClick}
-                className="w-full aspect-square max-w-[180px] rounded-xl border-2 border-dashed border-slate-700 bg-background-dark flex flex-col items-center justify-center text-slate-500 gap-2 relative overflow-hidden group transition-all hover:border-primary/50 cursor-pointer"
-              >
-                {photoPreview ? (
-                  <img
-                    src={photoPreview}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-4xl group-hover:text-primary transition-colors">
-                      add_a_photo
-                    </span>
-                    <span className="text-[10px] font-medium uppercase tracking-wider">
-                      Pratinjau Foto
-                    </span>
-                  </>
-                )}
-                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-                className="hidden"
-              />
-              <button
-                onClick={handlePhotoClick}
-                type="button"
-                className="w-full bg-primary/10 text-primary border border-primary/20 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-primary/20 transition-all active:scale-95"
-              >
-                <span className="material-symbols-outlined text-xl">
-                  upload
+            <div className="relative w-full aspect-video bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl flex items-center justify-center overflow-hidden border border-slate-700">
+              {photoPreview ? (
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : currentImage ? (
+                <img
+                  src={currentImage}
+                  alt="Current"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="material-symbols-outlined text-slate-600 text-5xl">
+                  image
                 </span>
-                {photoPreview ? "Ganti Foto" : "Upload Foto"}
-              </button>
+              )}
             </div>
+            <button
+              onClick={handlePhotoClick}
+              className="w-full bg-primary hover:bg-primary/90 text-white px-4 py-3 rounded-lg font-bold transition-transform active:scale-95 shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-lg">
+                {photoPreview ? "edit" : "add_a_photo"}
+              </span>
+              {photoPreview ? "Ganti Foto" : "Upload Foto"}
+            </button>
           </section>
 
-          {/* Card 2: Informasi Dasar */}
+          {/* Card 1: Informasi Dasar */}
           <section className="bg-card-dark p-5 rounded-xl border border-slate-800 space-y-4 shadow-sm">
             <h3 className="text-white font-bold mb-2 flex items-center gap-2 text-sm uppercase tracking-wider">
               <span className="material-symbols-outlined text-primary text-xl">
@@ -215,9 +268,9 @@ const MaterialAddPage = () => {
                   className="w-full appearance-none bg-background-dark border-slate-800 text-slate-100 rounded-xl px-4 py-3 focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none"
                 >
                   <option value="">Pilih Kategori</option>
-                  <option value="bahan-bangunan">Bahan Bangunan</option>
-                  <option value="alat-listrik">Alat Listrik</option>
-                  <option value="pipa-sanitasi">Pipa & Sanitasi</option>
+                  <option value="Bahan Bangunan">Bahan Bangunan</option>
+                  <option value="Alat Listrik">Alat Listrik</option>
+                  <option value="Pipa Sanitasi">Pipa & Sanitasi</option>
                 </select>
                 <span className="material-symbols-outlined absolute right-4 top-3 pointer-events-none text-slate-500">
                   expand_more
@@ -231,6 +284,7 @@ const MaterialAddPage = () => {
                 </label>
                 <input
                   name="merk"
+                  value={formData.merk}
                   onChange={handleChange}
                   className="w-full bg-background-dark border-slate-800 text-slate-100 rounded-xl px-4 py-3 focus:ring-1 focus:ring-primary outline-none transition-all"
                   placeholder="Merk"
@@ -243,6 +297,7 @@ const MaterialAddPage = () => {
                 </label>
                 <input
                   name="tipe"
+                  value={formData.tipe}
                   onChange={handleChange}
                   className="w-full bg-background-dark border-slate-800 text-slate-100 rounded-xl px-4 py-3 focus:ring-1 focus:ring-primary outline-none transition-all"
                   placeholder="Tipe"
@@ -252,7 +307,7 @@ const MaterialAddPage = () => {
             </div>
           </section>
 
-          {/* Card 3: Harga & Stok */}
+          {/* Card 2: Harga & Stok */}
           <section className="bg-card-dark p-5 rounded-xl border border-slate-800 space-y-4 shadow-sm">
             <h3 className="text-white font-bold mb-2 flex items-center gap-2 text-sm uppercase tracking-wider">
               <span className="material-symbols-outlined text-primary text-xl">
@@ -270,6 +325,7 @@ const MaterialAddPage = () => {
                 </span>
                 <input
                   name="harga"
+                  value={formData.harga}
                   onChange={handleChange}
                   className="w-full bg-background-dark border-slate-800 text-slate-100 rounded-xl pl-12 pr-4 py-3 focus:ring-1 focus:ring-primary outline-none transition-all"
                   placeholder="0"
@@ -284,6 +340,7 @@ const MaterialAddPage = () => {
                 </label>
                 <input
                   name="stok"
+                  value={formData.stok}
                   onChange={handleChange}
                   className="w-full bg-background-dark border-slate-800 text-slate-100 rounded-xl px-4 py-3 focus:ring-1 focus:ring-primary outline-none"
                   placeholder="0"
@@ -295,13 +352,40 @@ const MaterialAddPage = () => {
                   Min. Stok
                 </label>
                 <input
-                  name="minStok"
+                  name="min_stok"
+                  value={formData.min_stok}
                   onChange={handleChange}
                   className="w-full bg-background-dark border-slate-800 text-slate-100 rounded-xl px-4 py-3 focus:ring-1 focus:ring-primary outline-none"
                   placeholder="5"
                   type="number"
                 />
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 px-1 uppercase tracking-tight">
+                Satuan
+              </label>
+              <input
+                name="satuan"
+                value={formData.satuan}
+                onChange={handleChange}
+                className="w-full bg-background-dark border-slate-800 text-slate-100 rounded-xl px-4 py-3 focus:ring-1 focus:ring-primary outline-none transition-all"
+                placeholder="pcs"
+                type="text"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 px-1 uppercase tracking-tight">
+                Vendor
+              </label>
+              <input
+                name="vendor"
+                value={formData.vendor}
+                onChange={handleChange}
+                className="w-full bg-background-dark border-slate-800 text-slate-100 rounded-xl px-4 py-3 focus:ring-1 focus:ring-primary outline-none transition-all"
+                placeholder="Nama Vendor"
+                type="text"
+              />
             </div>
           </section>
         </main>
@@ -311,4 +395,4 @@ const MaterialAddPage = () => {
   );
 };
 
-export default MaterialAddPage;
+export default MaterialEditPage;

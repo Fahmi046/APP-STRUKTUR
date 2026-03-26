@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { createVendor } from "../../api/vendorService";
+import toast from "react-hot-toast";
 
 const VendorAddPage = () => {
   const navigate = useNavigate();
@@ -8,170 +10,169 @@ const VendorAddPage = () => {
   const [formData, setFormData] = useState({
     nama: "",
     kontak: "",
-    email: "",
     npwp: "",
     alamat: "",
+    status: "Aktif",
   });
+
+  const [loading, setLoading] = useState(false);
 
   // Handle perubahan input secara dinamis
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simpan ke Console dulu (Minggu 0-1)
-    console.log("Data Vendor Baru:", formData);
 
-    // Nanti di Minggu 1: Tambahkan fungsi push ke MOCK_VENDOR atau API Laravel
-    alert("Vendor berhasil disimpan!");
-    navigate("/master/vendor"); // Kembali ke list
+    // Validasi sederhana
+    if (!formData.nama || !formData.alamat) {
+      toast.error("Nama dan Alamat wajib diisi!");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await createVendor(formData);
+
+      // Notifikasi Sukses
+      toast.success("Vendor berhasil ditambahkan!");
+
+      navigate("/master/vendor"); // Kembali ke list
+    } catch (error: any) {
+      console.error("Gagal simpan:", error);
+      toast.error(
+        error.response?.data?.message || "Terjadi kesalahan saat menyimpan.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex flex-col">
-      {/* Top Navigation Bar */}
-      <nav className="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-border-dark px-4 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-background-dark pb-20 text-white">
+      {/* Header Section */}
+      <header className="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
-          className="text-slate-500 dark:text-slate-400 font-medium text-sm hover:opacity-80 transition-opacity"
+          className="text-slate-400 font-medium hover:text-white transition-colors"
         >
           Batal
         </button>
-        <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-          Tambah Vendor
-        </h1>
+        <h1 className="text-lg font-bold">Tambah Vendor</h1>
         <button
           onClick={handleSave}
-          className="text-primary font-bold text-sm hover:opacity-80 transition-opacity"
+          disabled={loading}
+          className="bg-primary text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
         >
-          Simpan
+          {loading ? "..." : "Simpan"}
         </button>
-      </nav>
+      </header>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto custom-scrollbar">
-        <form onSubmit={handleSave} className="max-w-md mx-auto p-4 space-y-6">
-          <div className="bg-white dark:bg-card-dark rounded-xl p-5 shadow-sm space-y-5 border border-slate-100 dark:border-border-dark">
-            {/* Nama Vendor */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Nama Vendor <span className="text-primary">*</span>
-              </label>
+      <main className="p-4 max-w-md mx-auto space-y-6">
+        {/* Form Fields */}
+        <section className="space-y-5">
+          {/* Nama Vendor */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase ml-1 tracking-wider">
+              Nama Vendor
+            </label>
+            <input
+              name="nama"
+              value={formData.nama}
+              onChange={handleChange}
+              type="text"
+              className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-slate-100 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder-slate-500"
+              placeholder="Masukkan nama vendor"
+              required
+            />
+          </div>
+
+          {/* Kontak */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase ml-1 tracking-wider">
+              Nomor Kontak
+            </label>
+            <input
+              name="kontak"
+              value={formData.kontak}
+              onChange={handleChange}
+              type="tel"
+              className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-slate-100 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder-slate-500"
+              placeholder="Masukkan nomor kontak"
+            />
+          </div>
+
+          {/* NPWP */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase ml-1 tracking-wider">
+              NPWP
+            </label>
+            <input
+              name="npwp"
+              value={formData.npwp}
+              onChange={handleChange}
+              type="text"
+              className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-slate-100 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder-slate-500"
+              placeholder="00.000.000.0-000.000"
+            />
+          </div>
+
+          {/* Alamat */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase ml-1 tracking-wider">
+              Alamat Lengkap
+            </label>
+            <textarea
+              name="alamat"
+              value={formData.alamat}
+              onChange={handleChange}
+              className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-slate-100 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all resize-none placeholder-slate-500"
+              placeholder="Masukkan alamat lengkap vendor"
+              rows={4}
+            ></textarea>
+          </div>
+
+          {/* Toggle Status */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
+            <div className="text-left">
+              <h3 className="text-slate-100 font-bold text-sm">Status Aktif</h3>
+              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tight">
+                Aktifkan vendor
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
               <input
-                name="nama"
-                value={formData.nama}
-                onChange={handleChange}
-                className="w-full bg-slate-50 dark:bg-input-dark border border-slate-200 dark:border-border-dark rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/50 outline-none transition-all"
-                placeholder="Masukkan nama vendor"
-                required
-                type="text"
+                type="checkbox"
+                checked={formData.status === "Aktif"}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    status: e.target.checked ? "Aktif" : "Non-Aktif",
+                  })
+                }
+                className="sr-only peer"
               />
-            </div>
-
-            {/* Kontak */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Kontak
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined text-xl">
-                  call
-                </span>
-                <input
-                  name="kontak"
-                  value={formData.kontak}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 dark:bg-input-dark border border-slate-200 dark:border-border-dark rounded-xl pl-12 pr-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/50 outline-none transition-all"
-                  placeholder="Masukkan nomor kontak"
-                  type="tel"
-                />
-              </div>
-            </div>
-
-            {/* Email */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Email
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined text-xl">
-                  mail
-                </span>
-                <input
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 dark:bg-input-dark border border-slate-200 dark:border-border-dark rounded-xl pl-12 pr-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/50 outline-none transition-all"
-                  placeholder="Masukkan alamat email"
-                  type="email"
-                />
-              </div>
-            </div>
-
-            {/* NPWP */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                NPWP
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined text-xl">
-                  badge
-                </span>
-                <input
-                  name="npwp"
-                  value={formData.npwp}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 dark:bg-input-dark border border-slate-200 dark:border-border-dark rounded-xl pl-12 pr-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/50 outline-none transition-all"
-                  placeholder="00.000.000.0-000.000"
-                  type="text"
-                />
-              </div>
-            </div>
-
-            {/* Alamat */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Alamat
-              </label>
-              <textarea
-                name="alamat"
-                value={formData.alamat}
-                onChange={handleChange}
-                className="w-full bg-slate-50 dark:bg-input-dark border border-slate-200 dark:border-border-dark rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/50 outline-none transition-all resize-none"
-                placeholder="Masukkan alamat lengkap vendor"
-                rows={4}
-              ></textarea>
-            </div>
+              <div className="w-12 h-6 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+            </label>
           </div>
+        </section>
 
-          <div className="px-2 flex items-start gap-2 text-slate-500 dark:text-slate-400 text-xs">
-            <span className="material-symbols-outlined text-base">info</span>
-            <p>
-              Pastikan data yang Anda masukkan sudah benar sebelum menekan
-              tombol simpan.
-            </p>
-          </div>
-
-          <div className="h-24"></div>
-        </form>
-      </main>
-
-      {/* Bottom Action Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/95 dark:via-background-dark/95 to-transparent">
-        <div className="max-w-md mx-auto">
+        <div className="pt-6">
           <button
             onClick={handleSave}
-            className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            disabled={loading}
+            className="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            <span className="material-symbols-outlined">save</span>
-            Simpan Vendor
+            {loading ? "Sedang Menyimpan..." : "Simpan Data Vendor"}
           </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

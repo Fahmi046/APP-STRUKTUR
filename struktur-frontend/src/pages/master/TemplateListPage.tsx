@@ -1,18 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "../../components/BottomNav";
-// MENGGUNAKAN CARA PENGAMBILAN DATA SESUAI PERMINTAAN
-import { MOCK_TEMPLATES } from "../../data/templateStore";
+import { getTemplate } from "../../api/templateService";
+import toast from "react-hot-toast";
 
 const TemplateListPage = () => {
   const navigate = useNavigate();
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("Semua");
 
-  const filters = ["Semua", "SOP", "Kontrak", "Form", "Lainnya"];
+  const filters = [
+    "Semua",
+    "Legal & Hukum",
+    "SDM / HRD",
+    "Keuangan",
+    "Pemasaran",
+  ];
 
-  // Filter data yang diambil dari Store
-  const filteredTemplates = MOCK_TEMPLATES.filter((item) => {
+  // Fetch data dari API
+  useEffect(() => {
+    const fetchTemplate = async () => {
+      try {
+        setLoading(true);
+        const data = await getTemplate();
+        setTemplates(data);
+      } catch (error) {
+        console.error("Gagal load data Template:", error);
+        toast.error("Gagal memuat data template");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTemplate();
+  }, []);
+
+  // Filter data
+  const filteredTemplates = templates.filter((item) => {
     const matchesSearch = item.nama
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
@@ -80,7 +106,12 @@ const TemplateListPage = () => {
 
       {/* List View */}
       <main className="px-4 py-2 space-y-3">
-        {filteredTemplates.length > 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-4"></div>
+            <p>Mengambil data template...</p>
+          </div>
+        ) : filteredTemplates.length > 0 ? (
           filteredTemplates.map((item) => (
             <div
               key={item.id}
@@ -90,7 +121,7 @@ const TemplateListPage = () => {
               {/* Icon Container */}
               <div className="w-14 h-14 rounded-xl bg-background-dark flex items-center justify-center shrink-0 border border-border-dark text-primary group-hover:bg-primary/5 transition-colors">
                 <span className="material-symbols-outlined text-[28px]">
-                  {item.icon}
+                  description
                 </span>
               </div>
 
@@ -110,9 +141,9 @@ const TemplateListPage = () => {
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="font-black text-slate-400 text-[11px] tracking-tighter">
-                    {item.size}
+                    {item.ukuran_file}
                     <span className="text-[10px] text-slate-600 font-normal ml-2 italic">
-                      {item.date}
+                      {new Date(item.updated_at).toLocaleDateString("id-ID")}
                     </span>
                   </span>
                   <span

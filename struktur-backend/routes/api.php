@@ -2,6 +2,10 @@
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\KaryawanController;
+use App\Http\Controllers\Api\VendorController;
+use App\Http\Controllers\Api\MaterialController;
+use App\Http\Controllers\Api\TemplateController;
+use App\Http\Controllers\Api\ClientController;
 use Illuminate\Support\Facades\Route;
 /*
 |--------------------------------------------------------------------------
@@ -18,5 +22,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-
 Route::apiResource('sdm', KaryawanController::class);
+Route::apiResource('vendor', VendorController::class);
+Route::apiResource('material', MaterialController::class);
+Route::apiResource('template', TemplateController::class);
+Route::apiResource('client', ClientController::class);

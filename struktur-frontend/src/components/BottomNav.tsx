@@ -59,6 +59,19 @@ const BottomNav = () => {
         <span className="material-symbols-outlined">bar_chart_4_bars</span>
         <span className="text-[10px] font-medium">Reports</span>
       </NavLink>
+
+      {/* Marketing */}
+      <NavLink
+        to="/marketing"
+        className={({ isActive }) =>
+          `flex flex-col items-center gap-1 py-1 px-3 transition-colors ${
+            isActive ? "text-primary" : "text-slate-400"
+          }`
+        }
+      >
+        <span className="material-symbols-outlined">campaign</span>
+        <span className="text-[10px] font-medium">Marketing</span>
+      </NavLink>
     </nav>
   );
 };

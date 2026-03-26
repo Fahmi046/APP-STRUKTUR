@@ -19,10 +19,19 @@ import SDMDetailPage from "./pages/master/SDMDetailPage";
 import SDMEditPage from "./pages/master/SDMEditPage";
 import VendorDetailPage from "./pages/master/VendorDetailPage";
 import VendorAddPage from "./pages/master/VendorAddPage";
+import VendorEditPage from "./pages/master/VendorEditPage";
 import TemplateAddPage from "./pages/master/TemplateAddPage";
 import MaterialDetailPage from "./pages/master/MaterialDetailPage";
 import MaterialAddPage from "./pages/master/MaterialAddPage";
+import MaterialEditPage from "./pages/master/MaterialEditPage";
 import TemplateDetailPage from "./pages/master/TemplateDetailPage";
+import TemplateEditPage from "./pages/master/TemplateEditPage";
+
+// Import Marketing Pages
+import MarketingPage from "./pages/MarketingPage";
+import ClientRegistryPage from "./pages/marketing/ClientRegistryPage";
+import ClientAddPage from "./pages/marketing/ClientAddPage";
+import ClientDetailPage from "./pages/marketing/ClientDetailPage";
 
 const App = () => {
   return (
@@ -66,19 +75,30 @@ const App = () => {
             <Route path="vendor" element={<VendorListPage />} />
             <Route path="vendor/add" element={<VendorAddPage />} />
             <Route path="vendor/detail/:id" element={<VendorDetailPage />} />
+            <Route path="vendor/edit/:id" element={<VendorEditPage />} />
             <Route path="material" element={<MaterialListPage />} />
             <Route path="material/add" element={<MaterialAddPage />} />
             <Route
               path="material/detail/:id"
               element={<MaterialDetailPage />}
             />
+            <Route path="material/edit/:id" element={<MaterialEditPage />} />
             <Route path="template" element={<TemplateListPage />} />
             <Route path="template/add" element={<TemplateAddPage />} />
             <Route
               path="template/detail/:id"
               element={<TemplateDetailPage />}
             />
+            <Route path="template/edit/:id" element={<TemplateEditPage />} />
             <Route path="" element={<MasterHubPage />} />
+          </Route>
+
+          {/* 3. Marketing Routes */}
+          <Route path="/marketing">
+            <Route path="" element={<MarketingPage />} />
+            <Route path="clients" element={<ClientRegistryPage />} />
+            <Route path="clients/new" element={<ClientAddPage />} />
+            <Route path="clients/:id" element={<ClientDetailPage />} />
           </Route>
 
           {/* 4. Fallback 404 */}
