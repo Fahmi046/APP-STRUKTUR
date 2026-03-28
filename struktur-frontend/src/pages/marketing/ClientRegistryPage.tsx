@@ -1,328 +1,256 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import BottomNav from "../../components/BottomNav";
+import React, { useState } from "react";
+import { getClients } from "../../api/clientService";
+import GenericListPage from "../../components/GenericListPage";
 
 interface Client {
   id: number;
   nama: string;
   email: string;
-  telepon?: string;
-  status:
-    | "prospect"
-    | "contact"
-    | "survey"
-    | "negotiating"
-    | "deal"
-    | "cancelled";
-  verified: boolean;
-  jabatan?: string;
-  perusahaan?: string;
+  telepon: string;
+  sumber: string;
+  status: string; // prospect, contact, survey, quote, deal, lost
+  marketingPic: string;
+  ktp?: string;
+  npwp?: string;
+  alamat?: string;
+  created_at: string;
 }
 
 const ClientRegistryPage = () => {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("Semua");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [segment, setSegment] = useState<"semua" | "lead" | "terdaftar">(
+    "semua",
+  );
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // Fetch clients from API
-  useEffect(() => {
-    fetchClients();
-  }, []);
-
-  const fetchClients = async () => {
-    try {
-      const response = await fetch("http://localhost:8000/api/client");
-      if (response.ok) {
-        const data = await response.json();
-        setClients(data);
-      } else {
-        console.error("Failed to fetch clients");
-      }
-    } catch (error) {
-      console.error("Error fetching clients:", error);
-    } finally {
-      setLoading(false);
+  // Filter kustom
+  const customFilter = (data: Client[]) => {
+    let filtered = data;
+    if (segment === "lead") {
+      filtered = filtered.filter(
+        (c) => c.status !== "deal" && c.status !== "lost",
+      );
+    } else if (segment === "terdaftar") {
+      filtered = filtered.filter(
+        (c) => c.status === "deal" || c.status === "lost",
+      );
     }
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((c) => c.status === statusFilter);
+    }
+    return filtered;
   };
 
-  // Transform status for display
-  const getStatusDisplay = (status: string) => {
-    const statusMap: Record<string, string> = {
-      prospect: "Prospek",
-      contact: "Kontak",
-      survey: "Survey",
-      negotiating: "Menawar",
-      deal: "Deal",
-      cancelled: "Batal",
+  // Mapping status ke kelas statis
+  const getStatusStyle = (status: string) => {
+    const statusMap: Record<
+      string,
+      { borderClass: string; badgeClass: string; label: string }
+    > = {
+      prospect: {
+        borderClass: "border-l-blue-500",
+        badgeClass: "bg-blue-500/10 border border-blue-500/20 text-blue-400",
+        label: "Prospek",
+      },
+      contact: {
+        borderClass: "border-l-yellow-500",
+        badgeClass:
+          "bg-yellow-500/10 border border-yellow-500/20 text-yellow-400",
+        label: "Kontak",
+      },
+      survey: {
+        borderClass: "border-l-purple-500",
+        badgeClass:
+          "bg-purple-500/10 border border-purple-500/20 text-purple-400",
+        label: "Survey",
+      },
+      quote: {
+        borderClass: "border-l-orange-500",
+        badgeClass:
+          "bg-orange-500/10 border border-orange-500/20 text-orange-400",
+        label: "Menawar",
+      },
+      deal: {
+        borderClass: "border-l-emerald-500",
+        badgeClass:
+          "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400",
+        label: "Deal",
+      },
+      lost: {
+        borderClass: "border-l-red-500",
+        badgeClass: "bg-red-500/10 border border-red-500/20 text-red-400",
+        label: "Batal",
+      },
     };
-    return statusMap[status] || status;
+    return (
+      statusMap[status] || {
+        borderClass: "border-l-slate-500",
+        badgeClass: "bg-slate-500/10 border border-slate-500/20 text-slate-400",
+        label: status,
+      }
+    );
   };
 
-  // Get avatar color based on status
-  const getAvatarColor = (status: string) => {
-    const colors: Record<string, string> = {
-      prospect: "bg-blue-500/20",
-      contact: "bg-yellow-500/20",
-      survey: "bg-purple-500/20",
-      negotiating: "bg-orange-500/20",
-      deal: "bg-emerald-500/20",
-      cancelled: "bg-red-500/20",
-    };
-    return colors[status] || colors.prospect;
-  };
-
-  // Get border color based on status
-  const getBorderColor = (status: string) => {
-    const colors: Record<string, string> = {
-      prospect: "border-blue-500",
-      contact: "border-yellow-500",
-      survey: "border-purple-500",
-      negotiating: "border-orange-500",
-      deal: "border-emerald-500",
-      cancelled: "border-red-500",
-    };
-    return colors[status] || colors.prospect;
-  };
-
-  const statusChips = [
-    "prospect",
-    "contact",
-    "survey",
-    "negotiating",
-    "deal",
-    "cancelled",
-  ];
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, { bg: string; border: string; text: string }> =
-      {
-        prospect: {
-          bg: "bg-blue-500/10",
-          border: "border-blue-500/30",
-          text: "text-blue-400",
-        },
-        contact: {
-          bg: "bg-yellow-500/10",
-          border: "border-yellow-500/30",
-          text: "text-yellow-400",
-        },
-        survey: {
-          bg: "bg-purple-500/10",
-          border: "border-purple-500/30",
-          text: "text-purple-400",
-        },
-        negotiating: {
-          bg: "bg-orange-500/10",
-          border: "border-orange-500/30",
-          text: "text-orange-400",
-        },
-        deal: {
-          bg: "bg-emerald-500/10",
-          border: "border-emerald-500/30",
-          text: "text-emerald-400",
-        },
-        cancelled: {
-          bg: "bg-red-500/10",
-          border: "border-red-500/30",
-          text: "text-red-400",
-        },
-      };
-    return colors[status] || colors.prospect;
-  };
-
-  const getInitialsColor = (status: string) => {
-    const colors: Record<string, string> = {
-      prospect: "text-blue-400",
-      contact: "text-yellow-400",
-      survey: "text-purple-400",
-      negotiating: "text-orange-400",
-      deal: "text-emerald-400",
-      cancelled: "text-red-400",
-    };
-    return colors[status] || colors.prospect;
-  };
-
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (nama: string) => {
+    return nama
       .split(" ")
-      .map((word) => word[0]?.toUpperCase() || "")
-      .join("");
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
   };
 
-  const filteredClients = clients.filter((client) => {
-    const nama = client.nama ? client.nama.toLowerCase() : "";
-    const telepon = client.telepon ? client.telepon.toLowerCase() : "";
-    const matchesSearch =
-      nama.includes(searchQuery.toLowerCase()) ||
-      telepon.includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  const isVerified = (client: Client) => !!(client.ktp || client.npwp);
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
-  return (
-    <>
-      <div className="bg-background text-on-background min-h-screen pb-24">
-        {/* TopAppBar */}
-        <header className="fixed top-0 w-full z-50 bg-surface-container-low/70 backdrop-blur-xl border-b border-white/5 flex justify-between items-center px-6 h-16">
-          <div className="flex items-center gap-4">
-            <button className="text-primary active:scale-95 transition-transform">
-              <span className="material-symbols-outlined">menu</span>
-            </button>
-            <h1 className="text-primary font-black tracking-tighter text-xl uppercase">
-              Client Registry
-            </h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="text-slate-400 hover:text-primary transition-colors">
-              <span className="material-symbols-outlined">search</span>
-            </button>
-            <button className="text-slate-400 hover:text-primary transition-colors">
-              <span className="material-symbols-outlined">filter_list</span>
-            </button>
-            <div className="w-8 h-8 rounded-full bg-primary-container border border-primary/20 flex items-center justify-center overflow-hidden">
-              <div className="w-full h-full bg-linear-to-br from-primary to-orange-600 flex items-center justify-center text-white text-xs font-bold">
-                U
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="pt-20 px-4 max-w-2xl mx-auto">
-          {/* Segmented Control */}
-          <div className="mt-4 bg-surface-container-low p-1 rounded-xl flex items-center">
-            {["Semua", "Lead", "Terdaftar"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${
-                  activeTab === tab
-                    ? "text-primary bg-surface-container-highest"
-                    : "text-slate-500 hover:text-slate-300"
-                }`}
+  const renderItem = (client: Client) => {
+    const { borderClass, badgeClass, label } = getStatusStyle(client.status);
+    const verified = isVerified(client);
+    return (
+      <div
+        className={`bg-card-dark rounded-xl p-4 flex items-center gap-4 group hover:bg-card-dark/80 transition-colors cursor-pointer border-l-2 ${borderClass}`}
+      >
+        <div className="flex items-center justify-center w-12 h-12 text-lg font-bold border rounded-lg bg-primary/20 text-primary border-primary/10">
+          {getInitials(client.nama)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold truncate text-slate-100">
+              {client.nama}
+            </h3>
+            {verified && (
+              <span
+                className="text-sm material-symbols-outlined text-emerald-400"
+                style={{ fontVariationSettings: "'FILL' 1" }}
               >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          {/* Horizontal Status Chips */}
-          <div className="mt-6 flex gap-3 overflow-x-auto hide-scrollbar pb-2">
-            {statusChips.map((status) => {
-              const colors = getStatusColor(status);
-              return (
-                <button
-                  key={status}
-                  className={`whitespace-nowrap px-4 py-1.5 rounded-full border ${colors.border} ${colors.bg} ${colors.text} text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all`}
-                >
-                  {status}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Client List */}
-          <div className="mt-6 space-y-3">
-            {loading ? (
-              <div className="text-center py-8">
-                <p className="text-slate-400">Loading clients...</p>
-              </div>
-            ) : filteredClients.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-slate-400">No clients found</p>
-              </div>
-            ) : (
-              filteredClients.map((client) => {
-                const statusColor = getStatusColor(client.status);
-                const initialsColor = getInitialsColor(client.status);
-                const avatarColor = getAvatarColor(client.status);
-                const borderColor = getBorderColor(client.status);
-
-                return (
-                  <div
-                    key={client.id}
-                    onClick={() =>
-                      navigate(`/marketing/clients/detail/${client.id}`)
-                    }
-                    className={`bg-surface-container rounded-xl p-4 flex items-center gap-4 group hover:bg-surface-container-high transition-colors cursor-pointer border-l-2 ${borderColor}`}
-                  >
-                    <div
-                      className={`w-12 h-12 rounded-lg ${avatarColor} flex items-center justify-center ${initialsColor} font-bold text-lg border ${borderColor}/10`}
-                    >
-                      {getInitials(client.nama)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-on-surface font-semibold truncate">
-                          {client.nama}
-                        </h3>
-                        {client.verified && (
-                          <>
-                            <span
-                              className="material-symbols-outlined text-emerald-400 text-sm"
-                              style={{ fontVariationSettings: "'FILL' 1" }}
-                            >
-                              check_circle
-                            </span>
-                            <span className="text-[10px] font-bold uppercase tracking-tighter text-emerald-400">
-                              Terverifikasi
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <p className="text-slate-400 text-xs truncate">
-                        {client.email}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <span
-                        className={`px-2 py-0.5 rounded border ${statusColor.border} ${statusColor.bg} ${statusColor.text} text-[9px] font-black uppercase tracking-widest`}
-                      >
-                        {getStatusDisplay(client.status)}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
+                check_circle
+              </span>
             )}
           </div>
+          <p className="text-xs truncate text-slate-400">
+            {client.email || client.telepon}
+          </p>
+        </div>
+        <div className="text-right">
+          <span
+            className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${badgeClass}`}
+          >
+            {label}
+          </span>
+        </div>
+      </div>
+    );
+  };
 
-          <div className="mt-4">
-            <input
-              type="text"
-              placeholder="Search clients..."
-              value={searchQuery}
-              onChange={handleSearch}
-              className="w-full px-4 py-2 border rounded-lg"
-            />
-          </div>
-        </main>
+  // Mapping untuk status chips (statis)
+  const statusChips = [
+    {
+      key: "prospect",
+      label: "Prospek",
+      baseClass: "border-blue-500/30 bg-blue-500/10 text-blue-400",
+    },
+    {
+      key: "contact",
+      label: "Kontak",
+      baseClass: "border-yellow-500/30 bg-yellow-500/10 text-yellow-400",
+    },
+    {
+      key: "survey",
+      label: "Survey",
+      baseClass: "border-purple-500/30 bg-purple-500/10 text-purple-400",
+    },
+    {
+      key: "quote",
+      label: "Menawar",
+      baseClass: "border-orange-500/30 bg-orange-500/10 text-orange-400",
+    },
+    {
+      key: "deal",
+      label: "Deal",
+      baseClass: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
+    },
+    {
+      key: "lost",
+      label: "Batal",
+      baseClass: "border-red-500/30 bg-red-500/10 text-red-400",
+    },
+  ];
 
-        {/* Floating Action Button */}
+  const FilterComponent = () => (
+    <>
+      {/* Segmented Control */}
+      <div className="flex items-center p-1 mt-4 bg-card-dark rounded-xl">
         <button
-          onClick={() => navigate("/marketing/clients/new")}
-          className="fixed bottom-24 right-6 w-14 h-14 bg-primary rounded-xl shadow-2xl flex items-center justify-center text-white active:scale-90 transition-all z-40 border border-white/10"
+          onClick={() => setSegment("semua")}
+          className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-lg ${
+            segment === "semua"
+              ? "text-primary bg-background-dark"
+              : "text-slate-500 hover:text-slate-300"
+          }`}
         >
-          <span className="material-symbols-outlined text-3xl">add</span>
+          Semua
+        </button>
+        <button
+          onClick={() => setSegment("lead")}
+          className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-lg ${
+            segment === "lead"
+              ? "text-primary bg-background-dark"
+              : "text-slate-500 hover:text-slate-300"
+          }`}
+        >
+          Lead
+        </button>
+        <button
+          onClick={() => setSegment("terdaftar")}
+          className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-lg ${
+            segment === "terdaftar"
+              ? "text-primary bg-background-dark"
+              : "text-slate-500 hover:text-slate-300"
+          }`}
+        >
+          Terdaftar
         </button>
       </div>
-      <BottomNav />
 
-      <style>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+      {/* Status Chips */}
+      <div className="flex gap-3 pb-2 mt-4 overflow-x-auto hide-scrollbar">
+        <button
+          onClick={() => setStatusFilter("all")}
+          className={`whitespace-nowrap px-4 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all ${
+            statusFilter === "all"
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-slate-500/30 bg-slate-500/10 text-slate-400"
+          }`}
+        >
+          Semua Status
+        </button>
+        {statusChips.map((chip) => (
+          <button
+            key={chip.key}
+            onClick={() => setStatusFilter(chip.key)}
+            className={`whitespace-nowrap px-4 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all ${chip.baseClass} ${
+              statusFilter === chip.key
+                ? `ring-2 ${chip.baseClass.split(" ")[0]}`
+                : ""
+            }`}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
     </>
+  );
+
+  return (
+    <GenericListPage<Client>
+      title="Client Registry"
+      fetchData={getClients}
+      searchFields={(client) => [client.nama, client.email, client.telepon]}
+      renderItem={renderItem}
+      getItemId={(client) => client.id}
+      addPath="/marketing/clients/new"
+      basePath="/marketing/clients"
+      filterComponent={<FilterComponent />}
+      customFilter={customFilter}
+    />
   );
 };
 

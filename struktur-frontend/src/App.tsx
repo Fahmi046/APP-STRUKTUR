@@ -62,7 +62,7 @@ const App = () => {
       />
 
       {/* Wrapper Utama dengan Tema Dark Premium */}
-      <div className="bg-background-dark min-h-screen text-slate-100 selection:bg-primary/30">
+      <div className="min-h-screen bg-background-dark text-slate-100 selection:bg-primary/30">
         <Routes>
           {/* 1. Alur Masuk Utama */}
           <Route path="/" element={<Navigate to="/master/material" />} />
@@ -111,15 +111,15 @@ const App = () => {
                 <span className="material-symbols-outlined text-primary text-[64px] mb-4">
                   error_outline
                 </span>
-                <h1 className="text-2xl font-bold text-white mb-2">
+                <h1 className="mb-2 text-2xl font-bold text-white">
                   Halaman Tidak Ditemukan
                 </h1>
-                <p className="text-slate-400 mb-6 text-sm">
+                <p className="mb-6 text-sm text-slate-400">
                   Sepertinya link yang Anda tuju belum tersedia.
                 </p>
                 <button
                   onClick={() => (window.location.href = "/")}
-                  className="bg-primary text-white px-6 py-3 rounded-xl font-bold active:scale-95 transition-transform"
+                  className="px-6 py-3 font-bold text-white transition-transform bg-primary rounded-xl active:scale-95"
                 >
                   Kembali ke Dashboard
                 </button>

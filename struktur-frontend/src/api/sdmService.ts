@@ -7,10 +7,12 @@ const API_URL = "http://127.0.0.1:8000/api";
 export const getKaryawan = async () => {
   try {
     const response = await axios.get(`${API_URL}/sdm`);
-    return response.data;
+    // Jika respons langsung array, kembalikan response.data
+    // Jika respons { data: [...] }, kembalikan response.data.data
+    return response.data; // atau response.data.data
   } catch (error) {
     console.error("Gagal mengambil data SDM:", error);
-    throw error;
+    throw error; // atau return []
   }
 };
 
