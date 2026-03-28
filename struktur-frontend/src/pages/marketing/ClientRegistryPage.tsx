@@ -246,7 +246,9 @@ const ClientRegistryPage = () => {
                 return (
                   <div
                     key={client.id}
-                    onClick={() => navigate(`/marketing/clients/${client.id}`)}
+                    onClick={() =>
+                      navigate(`/marketing/clients/detail/${client.id}`)
+                    }
                     className={`bg-surface-container rounded-xl p-4 flex items-center gap-4 group hover:bg-surface-container-high transition-colors cursor-pointer border-l-2 ${borderColor}`}
                   >
                     <div

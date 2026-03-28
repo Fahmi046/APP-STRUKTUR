@@ -32,6 +32,7 @@ import MarketingPage from "./pages/MarketingPage";
 import ClientRegistryPage from "./pages/marketing/ClientRegistryPage";
 import ClientAddPage from "./pages/marketing/ClientAddPage";
 import ClientDetailPage from "./pages/marketing/ClientDetailPage";
+import ClientEditPage from "./pages/marketing/ClientEditPage";
 
 const App = () => {
   return (
@@ -98,7 +99,8 @@ const App = () => {
             <Route path="" element={<MarketingPage />} />
             <Route path="clients" element={<ClientRegistryPage />} />
             <Route path="clients/new" element={<ClientAddPage />} />
-            <Route path="clients/:id" element={<ClientDetailPage />} />
+            <Route path="clients/detail/:id" element={<ClientDetailPage />} />
+            <Route path="clients/edit/:id" element={<ClientEditPage />} />
           </Route>
 
           {/* 4. Fallback 404 */}

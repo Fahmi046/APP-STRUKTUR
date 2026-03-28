@@ -59,8 +59,7 @@ const ClientDetailPage = () => {
   };
 
   const handleEdit = () => {
-    // Mock edit - replace with navigation to edit page when created
-    alert("Edit functionality coming soon!");
+    navigate(`/marketing/clients/edit/${id}`);
   };
 
   const handleVerify = () => {
@@ -70,7 +69,7 @@ const ClientDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="bg-background text-on-surface font-body min-h-screen pb-24 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen pb-24 bg-background text-on-surface font-body">
         <div className="text-center">
           <p className="text-slate-400">Loading client data...</p>
         </div>
@@ -80,12 +79,12 @@ const ClientDetailPage = () => {
 
   if (error || !client) {
     return (
-      <div className="bg-background text-on-surface font-body min-h-screen pb-24 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen pb-24 bg-background text-on-surface font-body">
         <div className="text-center">
-          <p className="text-red-400 mb-4">{error || "Client not found"}</p>
+          <p className="mb-4 text-red-400">{error || "Client not found"}</p>
           <button
             onClick={handleBack}
-            className="text-primary hover:text-white transition-colors"
+            className="transition-colors text-primary hover:text-white"
           >
             Go back
           </button>
@@ -95,35 +94,35 @@ const ClientDetailPage = () => {
   }
 
   return (
-    <div className="bg-background text-on-surface font-body min-h-screen pb-24">
+    <div className="min-h-screen pb-24 bg-background text-on-surface font-body">
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 bg-surface-container/70 backdrop-blur-xl border-b border-white/5 flex justify-between items-center px-6 h-16">
+      <header className="fixed top-0 z-50 flex items-center justify-between w-full h-16 px-6 border-b bg-surface-container/70 backdrop-blur-xl border-white/5">
         <div className="flex items-center gap-4">
           <button
             onClick={handleBack}
-            className="text-on-surface hover:text-primary transition-colors active:scale-95"
+            className="transition-colors text-on-surface hover:text-primary active:scale-95"
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
-          <h1 className="text-primary font-headline font-bold text-lg tracking-tight uppercase">
+          <h1 className="text-lg font-bold tracking-tight uppercase text-primary font-headline">
             Detail Klien
           </h1>
         </div>
         <button
           onClick={handleEdit}
-          className="text-primary hover:text-white transition-colors active:scale-95"
+          className="transition-colors text-primary hover:text-white active:scale-95"
         >
           <span className="material-symbols-outlined">edit</span>
         </button>
       </header>
 
-      <main className="pt-24 px-6 max-w-4xl mx-auto space-y-6">
+      <main className="max-w-4xl px-6 pt-24 mx-auto space-y-6">
         {/* Profile Section */}
-        <section className="flex flex-col items-center text-center space-y-4">
+        <section className="flex flex-col items-center space-y-4 text-center">
           <div className="relative">
-            <div className="w-32 h-32 rounded-xl overflow-hidden border-2 border-primary/20 shadow-2xl">
+            <div className="w-32 h-32 overflow-hidden border-2 shadow-2xl rounded-xl border-primary/20">
               <img
-                className="w-full h-full object-cover"
+                className="object-cover w-full h-full"
                 src={
                   client.avatar ||
                   "https://via.placeholder.com/128x128?text=No+Image"
@@ -132,9 +131,9 @@ const ClientDetailPage = () => {
               />
             </div>
             {client.verified && (
-              <div className="absolute -bottom-2 -right-2 bg-tertiary text-on-tertiary rounded-full p-1 border-4 border-background">
+              <div className="absolute p-1 border-4 rounded-full -bottom-2 -right-2 bg-tertiary text-on-tertiary border-background">
                 <span
-                  className="material-symbols-outlined text-sm"
+                  className="text-sm material-symbols-outlined"
                   style={{ fontVariationSettings: "'FILL' 1" }}
                 >
                   verified
@@ -146,7 +145,7 @@ const ClientDetailPage = () => {
             <h2 className="text-2xl font-bold tracking-tight text-on-surface">
               {client.nama}
             </h2>
-            <p className="text-on-surface-variant text-sm">
+            <p className="text-sm text-on-surface-variant">
               {client.jabatan || "No position"} |{" "}
               {client.perusahaan || "No company"}
             </p>
@@ -164,37 +163,37 @@ const ClientDetailPage = () => {
         </section>
 
         {/* Bento Grid Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Contact Card */}
-          <div className="bg-surface-container p-5 rounded-xl border border-outline-variant flex flex-col justify-between space-y-4">
+          <div className="flex flex-col justify-between p-5 space-y-4 border bg-surface-container rounded-xl border-outline-variant">
             <div className="flex items-center justify-between">
               <h3 className="text-[11px] font-bold text-on-surface-variant tracking-widest uppercase">
                 Contact Information
               </h3>
-              <span className="material-symbols-outlined text-primary text-lg">
+              <span className="text-lg material-symbols-outlined text-primary">
                 contact_page
               </span>
             </div>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center border border-white/5">
-                  <span className="material-symbols-outlined text-sm text-secondary">
+                <div className="flex items-center justify-center w-8 h-8 border rounded bg-surface-container-high border-white/5">
+                  <span className="text-sm material-symbols-outlined text-secondary">
                     mail
                   </span>
                 </div>
                 <span className="text-sm font-medium">{client.email}</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center border border-white/5">
-                  <span className="material-symbols-outlined text-sm text-secondary">
+                <div className="flex items-center justify-center w-8 h-8 border rounded bg-surface-container-high border-white/5">
+                  <span className="text-sm material-symbols-outlined text-secondary">
                     call
                   </span>
                 </div>
                 <span className="text-sm font-medium">{client.telepon}</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center border border-white/5">
-                  <span className="material-symbols-outlined text-sm text-secondary">
+                <div className="flex items-center justify-center w-8 h-8 border rounded bg-surface-container-high border-white/5">
+                  <span className="text-sm material-symbols-outlined text-secondary">
                     location_on
                   </span>
                 </div>
@@ -204,17 +203,17 @@ const ClientDetailPage = () => {
           </div>
 
           {/* Documents Card */}
-          <div className="bg-surface-container p-5 rounded-xl border border-outline-variant space-y-4">
+          <div className="p-5 space-y-4 border bg-surface-container rounded-xl border-outline-variant">
             <div className="flex items-center justify-between">
               <h3 className="text-[11px] font-bold text-on-surface-variant tracking-widest uppercase">
                 Legal Documents
               </h3>
-              <span className="material-symbols-outlined text-primary text-lg">
+              <span className="text-lg material-symbols-outlined text-primary">
                 account_balance_wallet
               </span>
             </div>
             <div className="grid grid-cols-1 gap-3">
-              <div className="p-3 bg-surface-container-high rounded-lg border border-white/5 flex items-center justify-between">
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-surface-container-high border-white/5">
                 <div className="flex items-center gap-3">
                   <span
                     className="material-symbols-outlined text-tertiary"
@@ -226,14 +225,14 @@ const ClientDetailPage = () => {
                     <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">
                       KTP
                     </p>
-                    <p className="text-xs font-mono">{client.ktp}</p>
+                    <p className="font-mono text-xs">{client.ktp}</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-on-surface-variant text-sm">
+                <span className="text-sm material-symbols-outlined text-on-surface-variant">
                   visibility
                 </span>
               </div>
-              <div className="p-3 bg-surface-container-high rounded-lg border border-white/5 flex items-center justify-between">
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-surface-container-high border-white/5">
                 <div className="flex items-center gap-3">
                   <span
                     className="material-symbols-outlined text-tertiary"
@@ -245,10 +244,10 @@ const ClientDetailPage = () => {
                     <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">
                       NPWP
                     </p>
-                    <p className="text-xs font-mono">{client.npwp}</p>
+                    <p className="font-mono text-xs">{client.npwp}</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-on-surface-variant text-sm">
+                <span className="text-sm material-symbols-outlined text-on-surface-variant">
                   visibility
                 </span>
               </div>
@@ -256,34 +255,34 @@ const ClientDetailPage = () => {
           </div>
 
           {/* Interaction History */}
-          <div className="bg-surface-container p-5 rounded-xl border border-outline-variant space-y-4">
+          <div className="p-5 space-y-4 border bg-surface-container rounded-xl border-outline-variant">
             <div className="flex items-center justify-between">
               <h3 className="text-[11px] font-bold text-on-surface-variant tracking-widest uppercase">
                 Interaction History
               </h3>
-              <span className="material-symbols-outlined text-primary text-lg">
+              <span className="text-lg material-symbols-outlined text-primary">
                 history
               </span>
             </div>
-            <div className="text-center py-8">
-              <p className="text-slate-400 text-sm">
+            <div className="py-8 text-center">
+              <p className="text-sm text-slate-400">
                 No interaction history available
               </p>
             </div>
           </div>
 
           {/* Projects Card */}
-          <div className="bg-surface-container p-5 rounded-xl border border-outline-variant space-y-4">
+          <div className="p-5 space-y-4 border bg-surface-container rounded-xl border-outline-variant">
             <div className="flex items-center justify-between">
               <h3 className="text-[11px] font-bold text-on-surface-variant tracking-widest uppercase">
                 Current Projects
               </h3>
-              <span className="material-symbols-outlined text-primary text-lg">
+              <span className="text-lg material-symbols-outlined text-primary">
                 architecture
               </span>
             </div>
-            <div className="text-center py-8">
-              <p className="text-slate-400 text-sm">No projects available</p>
+            <div className="py-8 text-center">
+              <p className="text-sm text-slate-400">No projects available</p>
             </div>
           </div>
         </div>
@@ -292,16 +291,16 @@ const ClientDetailPage = () => {
         <div className="grid grid-cols-2 gap-4 mt-8">
           <button
             onClick={handleEdit}
-            className="flex items-center justify-center gap-2 py-4 border border-primary text-primary font-bold rounded-xl hover:bg-primary hover:text-white transition-all active:scale-95 uppercase tracking-widest text-xs"
+            className="flex items-center justify-center gap-2 py-4 text-xs font-bold tracking-widest uppercase transition-all border border-primary text-primary rounded-xl hover:bg-primary hover:text-white active:scale-95"
           >
-            <span className="material-symbols-outlined text-lg">edit</span>
+            <span className="text-lg material-symbols-outlined">edit</span>
             Edit Profile
           </button>
           <button
             onClick={handleVerify}
-            className="flex items-center justify-center gap-2 py-4 bg-primary text-white font-bold rounded-xl hover:bg-inverse-primary transition-all active:scale-95 uppercase tracking-widest text-xs"
+            className="flex items-center justify-center gap-2 py-4 text-xs font-bold tracking-widest text-white uppercase transition-all bg-primary rounded-xl hover:bg-inverse-primary active:scale-95"
           >
-            <span className="material-symbols-outlined text-lg">
+            <span className="text-lg material-symbols-outlined">
               verified_user
             </span>
             Verifikasi
@@ -310,7 +309,7 @@ const ClientDetailPage = () => {
       </main>
 
       {/* BottomNavBar */}
-      <nav className="fixed bottom-0 left-0 w-full h-20 flex justify-around items-center bg-surface-container/70 backdrop-blur-xl border-t border-white/5 pb-safe z-50">
+      <nav className="fixed bottom-0 left-0 z-50 flex items-center justify-around w-full h-20 border-t bg-surface-container/70 backdrop-blur-xl border-white/5 pb-safe">
         <a
           className="flex flex-col items-center justify-center text-primary"
           href="#"
@@ -330,7 +329,7 @@ const ClientDetailPage = () => {
           </span>
         </a>
         <a
-          className="flex flex-col items-center justify-center text-slate-500 hover:text-primary transition-colors"
+          className="flex flex-col items-center justify-center transition-colors text-slate-500 hover:text-primary"
           href="#"
           onClick={(e) => {
             e.preventDefault();
@@ -343,7 +342,7 @@ const ClientDetailPage = () => {
           </span>
         </a>
         <a
-          className="flex flex-col items-center justify-center text-slate-500 hover:text-primary transition-colors"
+          className="flex flex-col items-center justify-center transition-colors text-slate-500 hover:text-primary"
           href="#"
           onClick={(e) => e.preventDefault()}
         >

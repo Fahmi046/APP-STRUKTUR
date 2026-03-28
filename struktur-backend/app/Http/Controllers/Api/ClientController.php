@@ -33,11 +33,20 @@ class ClientController extends Controller
             'alamat' => 'nullable|string',
             'jabatan' => 'nullable|string|max:255',
             'perusahaan' => 'nullable|string|max:255',
-            'avatar' => 'nullable|string',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // Max 5MB
             'verified' => 'nullable|boolean'
         ]);
 
-        $client = Client::create($validated);
+        $data = $request->all();
+
+        // Proses upload avatar jika ada file
+        if ($request->hasFile('avatar')) {
+            $avatar = $request->file('avatar');
+            $avatarPath = $avatar->store('avatars', 'public'); // Simpan ke storage/app/public/avatars
+            $data['avatar'] = $avatarPath;
+        }
+
+        $client = Client::create($data);
         return response()->json($client, 201);
     }
 
@@ -75,11 +84,25 @@ class ClientController extends Controller
             'alamat' => 'nullable|string',
             'jabatan' => 'nullable|string|max:255',
             'perusahaan' => 'nullable|string|max:255',
-            'avatar' => 'nullable|string',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // Max 5MB
             'verified' => 'nullable|boolean'
         ]);
 
-        $client->update($validated);
+        $data = $request->all();
+
+        // Proses upload avatar jika ada file baru
+        if ($request->hasFile('avatar')) {
+            // Hapus file lama jika ada
+            if ($client->avatar && \Storage::disk('public')->exists($client->avatar)) {
+                \Storage::disk('public')->delete($client->avatar);
+            }
+
+            $avatar = $request->file('avatar');
+            $avatarPath = $avatar->store('avatars', 'public');
+            $data['avatar'] = $avatarPath;
+        }
+
+        $client->update($data);
         return response()->json($client);
     }
 
