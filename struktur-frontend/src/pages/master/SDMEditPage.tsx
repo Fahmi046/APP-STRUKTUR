@@ -1,305 +1,138 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getKaryawanDetail, updateKaryawan } from "../../api/sdmService";
-import toast from "react-hot-toast"; // 1. Import toast
+import GenericFormPage from "../../components/GenericFormPage";
+import type { FieldConfig } from "../../components/GenericFormPage";
+import toast from "react-hot-toast";
+
+const fieldConfigs: FieldConfig[] = [
+  {
+    name: "nama",
+    label: "Nama Lengkap",
+    type: "text",
+    required: true,
+    placeholder: "Masukkan nama lengkap",
+  },
+  {
+    name: "email",
+    label: "Email Perusahaan",
+    type: "email",
+    required: true,
+    placeholder: "contoh@perusahaan.com",
+  },
+  {
+    name: "jabatan",
+    label: "Jabatan / Posisi",
+    type: "select",
+    required: true,
+    options: [
+      { value: "Admin", label: "Admin" },
+      { value: "Staff", label: "Staff" },
+      { value: "Manager", label: "Manager" },
+    ],
+  },
+  {
+    name: "divisi",
+    label: "Divisi",
+    type: "select",
+    required: true,
+    options: [
+      { value: "Eksekutif", label: "Eksekutif" },
+      { value: "Marketing", label: "Marketing" },
+      { value: "Engineering", label: "Engineering" },
+      { value: "Operasional", label: "Operasional" },
+      { value: "Keuangan", label: "Keuangan" },
+      { value: "HRD", label: "HRD" },
+      { value: "Umum", label: "Umum" },
+    ],
+  },
+  { name: "nip", label: "NIP", type: "text", placeholder: "Contoh: 19920801" },
+  {
+    name: "status",
+    label: "Status Aktif",
+    type: "toggle",
+    toggleTrueValue: "Aktif",
+    toggleFalseValue: "Non-Aktif",
+  },
+];
 
 const SDMEditPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const [formData, setFormData] = useState({
-    nama: "",
-    jabatan: "",
-    divisi: "",
-    email: "",
-    status: "Aktif",
-    nip: "",
-  });
-
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [initialData, setInitialData] = useState({
+    nama: "",
+    email: "",
+    jabatan: "",
+    divisi: "Umum",
+    nip: "",
+    status: "Aktif",
+  });
   const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
-  // 1. Ambil data lama dari Laravel
   useEffect(() => {
     const fetchDetail = async () => {
       try {
         if (id) {
           const data = await getKaryawanDetail(id);
-          setFormData({
+          setInitialData({
             nama: data.nama || "",
+            email: data.email || "",
             jabatan: data.jabatan || "",
             divisi: data.divisi || "Umum",
-            email: data.email || "",
-            status: data.status || "Aktif",
             nip: data.nip || "",
+            status: data.status || "Aktif",
           });
           if (data.avatar) {
             setCurrentAvatar(`http://127.0.0.1:8000/storage/${data.avatar}`);
           }
         }
       } catch (error) {
-        toast.error("Gagal memuat data karyawan"); // Ganti alert
+        console.error("Error fetching karyawan:", error);
+        toast.error("Gagal memuat data karyawan");
+        navigate("/master/sdm");
       } finally {
         setLoading(false);
       }
     };
     fetchDetail();
-  }, [id]);
+  }, [id, navigate]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePhotoClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        toast.error("File harus berupa gambar!");
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Ukuran file maksimal 5MB!");
-        return;
-      }
-
-      setPhotoFile(file);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setPhotoPreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+  const handleUpdate = async (data: any) => {
+    if (id) {
+      await updateKaryawan(id, data);
     }
   };
 
-  // 2. Kirim perubahan ke Database dengan Toast
-  const handleUpdate = async () => {
-    if (!formData.nama || !formData.email) {
-      toast.error("Nama dan Email wajib diisi!");
-      return;
-    }
-
-    try {
-      setSaving(true);
-      if (id) {
-        let updateData = formData;
-
-        // Jika ada foto baru, kirim dengan FormData
-        if (photoFile) {
-          const formDataWithFile = new FormData();
-          formDataWithFile.append("nama", formData.nama);
-          formDataWithFile.append("jabatan", formData.jabatan);
-          formDataWithFile.append("divisi", formData.divisi);
-          formDataWithFile.append("email", formData.email);
-          formDataWithFile.append("status", formData.status);
-          formDataWithFile.append("nip", formData.nip);
-          formDataWithFile.append("avatar", photoFile);
-          updateData = formDataWithFile;
-        }
-
-        await updateKaryawan(id, updateData);
-
-        // Notifikasi Sukses
-        toast.success("Profil berhasil diperbarui!");
-
-        navigate(`/master/sdm/detail/${id}`);
-      }
-    } catch (error: any) {
-      console.error("Gagal update:", error);
-      toast.error(error.response?.data?.message || "Gagal memperbarui data");
-    } finally {
-      setSaving(false);
-    }
+  const handleSuccess = () => {
+    toast.success("Profil berhasil diperbarui!");
+    navigate(`/master/sdm/detail/${id}`);
   };
 
-  if (loading)
+  const handleCancel = () => {
+    navigate(`/master/sdm/detail/${id}`);
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-background-dark flex flex-col items-center justify-center text-white gap-3">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/30 border-t-primary"></div>
-        <p className="text-slate-400 font-medium">Memuat Data...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-3 text-white bg-background-dark">
+        <div className="w-8 h-8 border-4 rounded-full animate-spin border-primary/30 border-t-primary"></div>
+        <p className="font-medium text-slate-400">Memuat Data...</p>
       </div>
     );
+  }
 
   return (
-    <div className="min-h-screen bg-background-dark pb-20 text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-slate-400 font-medium hover:text-white transition-colors"
-        >
-          Batal
-        </button>
-        <h1 className="text-lg font-bold">Edit Profil</h1>
-        <button
-          onClick={handleUpdate}
-          disabled={saving}
-          className="bg-primary text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
-        >
-          {saving ? "..." : "Simpan"}
-        </button>
-      </header>
-
-      <main className="p-4 max-w-md mx-auto space-y-6">
-        {/* Profile Info Header */}
-        <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl text-center">
-          <div
-            onClick={handlePhotoClick}
-            className="w-20 h-20 rounded-full mx-auto flex items-center justify-center mb-3 border-2 border-dashed border-slate-700 overflow-hidden transition-all hover:border-primary/50 cursor-pointer bg-primary/10"
-          >
-            {photoPreview ? (
-              <img
-                src={photoPreview}
-                alt="Preview"
-                className="w-full h-full object-cover"
-              />
-            ) : currentAvatar ? (
-              <img
-                src={currentAvatar}
-                alt={formData.nama}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-2xl font-black text-primary">
-                {formData.nama.charAt(0).toUpperCase()}
-              </span>
-            )}
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoChange}
-            className="hidden"
-          />
-          <p className="text-[10px] text-slate-500 uppercase font-bold mt-2">
-            {photoPreview ? "Klik untuk ganti foto" : "Klik untuk upload foto"}
-          </p>
-          <h2 className="font-bold text-slate-200 mt-3">
-            {formData.nama || "Tanpa Nama"}
-          </h2>
-          <p className="text-xs text-slate-500 uppercase tracking-widest mt-1 font-bold">
-            {formData.jabatan || "Staff"}
-          </p>
-        </div>
-
-        <section className="space-y-5">
-          {/* Input Nama */}
-          <div className="space-y-2 text-left">
-            <label className="text-xs font-bold text-slate-500 uppercase ml-1 tracking-wider">
-              Nama Lengkap
-            </label>
-            <input
-              name="nama"
-              value={formData.nama}
-              onChange={handleChange}
-              type="text"
-              className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-slate-100 outline-none focus:border-primary transition-all"
-            />
-          </div>
-
-          {/* Input Email */}
-          <div className="space-y-2 text-left">
-            <label className="text-xs font-bold text-slate-500 uppercase ml-1 tracking-wider">
-              Email
-            </label>
-            <input
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              type="email"
-              className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-slate-100 outline-none focus:border-primary transition-all"
-            />
-          </div>
-
-          {/* Pilih Jabatan */}
-          <div className="space-y-2 text-left">
-            <label className="text-xs font-bold text-slate-500 uppercase ml-1 tracking-wider">
-              Jabatan
-            </label>
-            <div className="relative">
-              <select
-                name="jabatan"
-                value={formData.jabatan}
-                onChange={handleChange}
-                className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-slate-100 outline-none appearance-none focus:border-primary transition-all"
-              >
-                <option value="Admin">Admin</option>
-                <option value="Site Manager">Site Manager</option>
-                <option value="Logistik">Logistik</option>
-                <option value="Worker">Worker</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
-                expand_more
-              </span>
-            </div>
-          </div>
-
-          {/* Input NIP */}
-          <div className="space-y-2 text-left">
-            <label className="text-xs font-bold text-slate-500 uppercase ml-1 tracking-wider">
-              NIP
-            </label>
-            <input
-              name="nip"
-              value={formData.nip}
-              onChange={handleChange}
-              type="text"
-              className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-slate-100 outline-none focus:border-primary transition-all"
-            />
-          </div>
-
-          {/* Status Toggle */}
-          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
-            <div className="text-left">
-              <h3 className="text-slate-100 font-bold text-sm">
-                Status Karyawan
-              </h3>
-              <p
-                className={`text-[10px] uppercase font-black tracking-tighter ${formData.status === "Aktif" ? "text-primary" : "text-rose-500"}`}
-              >
-                {formData.status}
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.status === "Aktif"}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    status: e.target.checked ? "Aktif" : "Non-Aktif",
-                  })
-                }
-                className="sr-only peer"
-              />
-              <div className="w-12 h-6 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-            </label>
-          </div>
-        </section>
-
-        <div className="pt-6">
-          <button
-            onClick={handleUpdate}
-            disabled={saving}
-            className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50"
-          >
-            {saving ? "Memproses..." : "Update Profil Sekarang"}
-          </button>
-        </div>
-      </main>
-    </div>
+    <GenericFormPage
+      title="Edit Karyawan"
+      fields={fieldConfigs}
+      initialData={initialData}
+      onSubmit={handleUpdate}
+      onSuccess={handleSuccess}
+      onCancel={handleCancel}
+      hasPhotoField
+      photoFieldName="avatar"
+    />
   );
 };
 

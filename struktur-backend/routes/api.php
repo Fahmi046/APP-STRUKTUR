@@ -27,3 +27,4 @@ Route::apiResource('vendor', VendorController::class);
 Route::apiResource('material', MaterialController::class);
 Route::apiResource('template', TemplateController::class);
 Route::apiResource('client', ClientController::class);
+Route::get('/marketing-pics', [KaryawanController::class, 'getMarketingPics']);

@@ -104,4 +104,20 @@ class KaryawanController extends Controller
             ], 500);
         }
     }
+
+    public function getMarketingPics()
+    {
+        $marketingPics = Karyawan::where('divisi', 'Marketing')
+            ->where('status', 'Aktif')
+            ->select('id', 'nama', 'email')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'value' => $user->id,
+                    'label' => $user->nama
+                ];
+            });
+
+        return response()->json($marketingPics);
+    }
 }
